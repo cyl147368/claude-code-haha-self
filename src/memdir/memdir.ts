@@ -86,15 +86,15 @@ export function truncateEntrypointContent(raw: string): EntrypointTruncation {
 
   const reason =
     wasByteTruncated && !wasLineTruncated
-      ? `${formatFileSize(byteCount)} (limit: ${formatFileSize(MAX_ENTRYPOINT_BYTES)}) — index entries are too long`
+      ? `${formatFileSize(byteCount)}（限制：${formatFileSize(MAX_ENTRYPOINT_BYTES)}）— 索引条目过长`
       : wasLineTruncated && !wasByteTruncated
-        ? `${lineCount} lines (limit: ${MAX_ENTRYPOINT_LINES})`
-        : `${lineCount} lines and ${formatFileSize(byteCount)}`
+        ? `${lineCount} 行（限制：${MAX_ENTRYPOINT_LINES}）`
+        : `${lineCount} 行且 ${formatFileSize(byteCount)}`
 
   return {
     content:
       truncated +
-      `\n\n> WARNING: ${ENTRYPOINT_NAME} is ${reason}. Only part of it was loaded. Keep index entries to one line under ~200 chars; move detail into topic files.`,
+      `\n\n> 警告：${ENTRYPOINT_NAME} 为 ${reason}。仅加载了其中一部分。请将索引条目保持为一行且少于约 200 字符；把详细内容移入 topic files。`,
     lineCount,
     byteCount,
     wasLineTruncated,
@@ -114,9 +114,9 @@ const teamMemPrompts = feature('TEAMMEM')
  * Harness guarantees the directory exists via ensureMemoryDirExists().
  */
 export const DIR_EXISTS_GUIDANCE =
-  'This directory already exists — write to it directly with the Write tool (do not run mkdir or check for its existence).'
+  '此目录已经存在，请直接用 Write 工具写入（不要运行 mkdir，也不要检查它是否存在）。'
 export const DIRS_EXIST_GUIDANCE =
-  'Both directories already exist — write to them directly with the Write tool (do not run mkdir or check for their existence).'
+  '两个目录都已经存在，请直接用 Write 工具写入（不要运行 mkdir，也不要检查它们是否存在）。'
 
 /**
  * Ensure a memory directory exists. Idempotent — called from loadMemoryPrompt
@@ -204,43 +204,43 @@ export function buildMemoryLines(
 ): string[] {
   const howToSave = skipIndex
     ? [
-        '## How to save memories',
+        '## 如何保存记忆',
         '',
-        'Write each memory to its own file (e.g., `user_role.md`, `feedback_testing.md`) using this frontmatter format:',
+        '将每条记忆写入自己的文件（例如 `user_role.md`、`feedback_testing.md`），并使用下面的 frontmatter 格式：',
         '',
         ...MEMORY_FRONTMATTER_EXAMPLE,
         '',
-        '- Keep the name, description, and type fields in memory files up-to-date with the content',
-        '- Organize memory semantically by topic, not chronologically',
-        '- Update or remove memories that turn out to be wrong or outdated',
-        '- Do not write duplicate memories. First check if there is an existing memory you can update before writing a new one.',
+        '- 保持 memory 文件中的 name、description 和 type 字段与内容同步更新',
+        '- 按主题语义组织记忆，而不是按时间顺序组织',
+        '- 如果某条记忆后来证明错误或过时，请更新或移除它',
+        '- 不要写入重复记忆。写入新记忆前，先检查是否有可更新的已有记忆。',
       ]
     : [
-        '## How to save memories',
+        '## 如何保存记忆',
         '',
-        'Saving a memory is a two-step process:',
+        '保存记忆分两步：',
         '',
-        '**Step 1** — write the memory to its own file (e.g., `user_role.md`, `feedback_testing.md`) using this frontmatter format:',
+        '**步骤 1**：将记忆写入自己的文件（例如 `user_role.md`、`feedback_testing.md`），并使用下面的 frontmatter 格式：',
         '',
         ...MEMORY_FRONTMATTER_EXAMPLE,
         '',
-        `**Step 2** — add a pointer to that file in \`${ENTRYPOINT_NAME}\`. \`${ENTRYPOINT_NAME}\` is an index, not a memory — each entry should be one line, under ~150 characters: \`- [Title](file.md) — one-line hook\`. It has no frontmatter. Never write memory content directly into \`${ENTRYPOINT_NAME}\`.`,
+        `**步骤 2**：在 \`${ENTRYPOINT_NAME}\` 中添加指向该文件的指针。\`${ENTRYPOINT_NAME}\` 是索引，不是记忆本体。每个条目应为一行，约 150 字符以内：\`- [Title](file.md) - one-line hook\`。它没有 frontmatter。绝不要把记忆内容直接写进 \`${ENTRYPOINT_NAME}\`。`,
         '',
-        `- \`${ENTRYPOINT_NAME}\` is always loaded into your conversation context — lines after ${MAX_ENTRYPOINT_LINES} will be truncated, so keep the index concise`,
-        '- Keep the name, description, and type fields in memory files up-to-date with the content',
-        '- Organize memory semantically by topic, not chronologically',
-        '- Update or remove memories that turn out to be wrong or outdated',
-        '- Do not write duplicate memories. First check if there is an existing memory you can update before writing a new one.',
+        `- \`${ENTRYPOINT_NAME}\` 总会加载进你的对话上下文，${MAX_ENTRYPOINT_LINES} 行之后会被截断，因此索引要保持简洁`,
+        '- 保持 memory 文件中的 name、description 和 type 字段与内容同步更新',
+        '- 按主题语义组织记忆，而不是按时间顺序组织',
+        '- 如果某条记忆后来证明错误或过时，请更新或移除它',
+        '- 不要写入重复记忆。写入新记忆前，先检查是否有可更新的已有记忆。',
       ]
 
   const lines: string[] = [
     `# ${displayName}`,
     '',
-    `You have a persistent, file-based memory system at \`${memoryDir}\`. ${DIR_EXISTS_GUIDANCE}`,
+    `你有一个持久化、基于文件的记忆系统，位于 \`${memoryDir}\`。${DIR_EXISTS_GUIDANCE}`,
     '',
-    "You should build up this memory system over time so that future conversations can have a complete picture of who the user is, how they'd like to collaborate with you, what behaviors to avoid or repeat, and the context behind the work the user gives you.",
+    '你应该随着时间逐步构建这个记忆系统，使未来对话能完整了解用户是谁、他们希望如何与你协作、哪些行为要避免或重复，以及用户交给你的工作背后的上下文。',
     '',
-    'If the user explicitly asks you to remember something, save it immediately as whichever type fits best. If they ask you to forget something, find and remove the relevant entry.',
+    '如果用户明确要求你记住某件事，请立即以最合适的类型保存。如果用户要求你忘记某件事，请找到并移除相关条目。',
     '',
     ...TYPES_SECTION_INDIVIDUAL,
     ...WHAT_NOT_TO_SAVE_SECTION,
@@ -251,10 +251,10 @@ export function buildMemoryLines(
     '',
     ...TRUSTING_RECALL_SECTION,
     '',
-    '## Memory and other forms of persistence',
-    'Memory is one of several persistence mechanisms available to you as you assist the user in a given conversation. The distinction is often that memory can be recalled in future conversations and should not be used for persisting information that is only useful within the scope of the current conversation.',
-    '- When to use or update a plan instead of memory: If you are about to start a non-trivial implementation task and would like to reach alignment with the user on your approach you should use a Plan rather than saving this information to memory. Similarly, if you already have a plan within the conversation and you have changed your approach persist that change by updating the plan rather than saving a memory.',
-    '- When to use or update tasks instead of memory: When you need to break your work in current conversation into discrete steps or keep track of your progress use tasks instead of saving to memory. Tasks are great for persisting information about the work that needs to be done in the current conversation, but memory should be reserved for information that will be useful in future conversations.',
+    '## 记忆和其他持久化形式',
+    'Memory 是你在给定对话中协助用户时可用的几种持久化机制之一。区别通常在于 memory 可以在未来对话中被召回，不应用于保存只在当前对话范围内有用的信息。',
+    '- 何时使用或更新 plan 而不是 memory：如果你即将开始非平凡实现任务，并希望与用户对齐方案，请使用 Plan，而不是把这些信息保存到 memory。同样，如果对话中已有 plan，而你改变了方案，请通过更新 plan 来持久化该变更，而不是保存 memory。',
+    '- 何时使用或更新 tasks 而不是 memory：当你需要把当前对话中的工作拆成离散步骤，或跟踪进度时，请使用 tasks，而不是保存 memory。Tasks 很适合持久化当前对话中需要完成的工作；memory 应保留给未来对话也有用的信息。',
     '',
     ...(extraGuidelines ?? []),
     '',
@@ -308,7 +308,7 @@ export function buildMemoryPrompt(params: {
     lines.push(
       `## ${ENTRYPOINT_NAME}`,
       '',
-      `Your ${ENTRYPOINT_NAME} is currently empty. When you save new memories, they will appear here.`,
+      `你的 ${ENTRYPOINT_NAME} 当前为空。保存新记忆后，它们会出现在这里。`,
     )
   }
 
@@ -337,22 +337,22 @@ function buildAssistantDailyLogPrompt(skipIndex = false): string {
   const lines: string[] = [
     '# auto memory',
     '',
-    `You have a persistent, file-based memory system found at: \`${memoryDir}\``,
+    `你有一个持久化、基于文件的记忆系统，位于：\`${memoryDir}\``,
     '',
-    "This session is long-lived. As you work, record anything worth remembering by **appending** to today's daily log file:",
+    '此会话是长期运行的。工作过程中，把任何值得记住的内容通过 **append** 方式记录到今天的 daily log 文件中：',
     '',
     `\`${logPathPattern}\``,
     '',
-    "Substitute today's date (from `currentDate` in your context) for `YYYY-MM-DD`. When the date rolls over mid-session, start appending to the new day's file.",
+    '用今天日期（来自上下文中的 `currentDate`）替换 `YYYY-MM-DD`。如果会话中途日期切换，请开始 append 到新日期的文件。',
     '',
-    'Write each entry as a short timestamped bullet. Create the file (and parent directories) on first write if it does not exist. Do not rewrite or reorganize the log — it is append-only. A separate nightly process distills these logs into `MEMORY.md` and topic files.',
+    '每个条目写成简短的带时间戳 bullet。如果文件（及父目录）不存在，第一次写入时创建它。不要重写或重组 log，它是 append-only。单独的 nightly process 会把这些 logs 提炼进 `MEMORY.md` 和 topic files。',
     '',
-    '## What to log',
-    '- User corrections and preferences ("use bun, not npm"; "stop summarizing diffs")',
-    '- Facts about the user, their role, or their goals',
-    '- Project context that is not derivable from the code (deadlines, incidents, decisions and their rationale)',
-    '- Pointers to external systems (dashboards, Linear projects, Slack channels)',
-    '- Anything the user explicitly asks you to remember',
+    '## 记录什么',
+    '- 用户纠正和偏好（"use bun, not npm"；"stop summarizing diffs"）',
+    '- 关于用户、其角色或目标的事实',
+    '- 无法从代码推导出来的项目上下文（deadlines、incidents、decisions 及其 rationale）',
+    '- 外部系统指针（dashboards、Linear projects、Slack channels）',
+    '- 用户明确要求你记住的任何内容',
     '',
     ...WHAT_NOT_TO_SAVE_SECTION,
     '',
@@ -360,7 +360,7 @@ function buildAssistantDailyLogPrompt(skipIndex = false): string {
       ? []
       : [
           `## ${ENTRYPOINT_NAME}`,
-          `\`${ENTRYPOINT_NAME}\` is the distilled index (maintained nightly from your logs) and is loaded into your context automatically. Read it for orientation, but do not edit it directly — record new information in today's log instead.`,
+          `\`${ENTRYPOINT_NAME}\` 是提炼后的索引（每晚从你的 logs 维护），会自动加载进你的上下文。读取它来了解方向，但不要直接编辑它；新信息请记录到今天的 log 中。`,
           '',
         ]),
     ...buildSearchingPastContextSection(memoryDir),
@@ -390,18 +390,18 @@ export function buildSearchingPastContextSection(autoMemDir: string): string[] {
     ? `grep -rn "<search term>" ${projectDir}/ --include="*.jsonl"`
     : `${GREP_TOOL_NAME} with pattern="<search term>" path="${projectDir}/" glob="*.jsonl"`
   return [
-    '## Searching past context',
+    '## 搜索过去上下文',
     '',
-    'When looking for past context:',
-    '1. Search topic files in your memory directory:',
+    '查找过去上下文时：',
+    '1. 搜索 memory 目录中的 topic files：',
     '```',
     memSearch,
     '```',
-    '2. Session transcript logs (last resort — large files, slow):',
+    '2. Session transcript logs（最后手段，文件大且慢）：',
     '```',
     transcriptSearch,
     '```',
-    'Use narrow search terms (error messages, file paths, function names) rather than broad keywords.',
+    '使用较窄的搜索词（错误消息、文件路径、函数名），而不是宽泛关键词。',
     '',
   ]
 }

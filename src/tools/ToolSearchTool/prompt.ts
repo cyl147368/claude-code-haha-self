@@ -24,7 +24,7 @@ export { TOOL_SEARCH_TOOL_NAME } from './constants.js'
 
 import { TOOL_SEARCH_TOOL_NAME } from './constants.js'
 
-const PROMPT_HEAD = `Fetches full schema definitions for deferred tools so they can be called.
+const PROMPT_HEAD = `获取 deferred tools 的完整 schema 定义，使它们可以被调用。
 
 `
 
@@ -37,18 +37,18 @@ function getToolLocationHint(): string {
     process.env.USER_TYPE === 'ant' ||
     getFeatureValue_CACHED_MAY_BE_STALE('tengu_glacier_2xr', false)
   return deltaEnabled
-    ? 'Deferred tools appear by name in <system-reminder> messages.'
-    : 'Deferred tools appear by name in <available-deferred-tools> messages.'
+    ? 'Deferred tools 会以名称形式出现在 <system-reminder> 消息中。'
+    : 'Deferred tools 会以名称形式出现在 <available-deferred-tools> 消息中。'
 }
 
-const PROMPT_TAIL = ` Until fetched, only the name is known — there is no parameter schema, so the tool cannot be invoked. This tool takes a query, matches it against the deferred tool list, and returns the matched tools' complete JSONSchema definitions inside a <functions> block. Once a tool's schema appears in that result, it is callable exactly like any tool defined at the top of the prompt.
+const PROMPT_TAIL = ` 在获取前，只知道工具名称，没有参数 schema，因此无法调用该工具。此工具接收一个 query，在 deferred tool list 中匹配，并在 <functions> 块内返回匹配工具的完整 JSONSchema 定义。一旦某个工具的 schema 出现在结果中，它就能像 prompt 顶部定义的其他工具一样被调用。
 
-Result format: each matched tool appears as one <function>{"description": "...", "name": "...", "parameters": {...}}</function> line inside the <functions> block — the same encoding as the tool list at the top of this prompt.
+结果格式：每个匹配工具会作为 <functions> 块中的一行 <function>{"description": "...", "name": "...", "parameters": {...}}</function> 出现，编码方式与此 prompt 顶部的工具列表相同。
 
-Query forms:
-- "select:Read,Edit,Grep" — fetch these exact tools by name
-- "notebook jupyter" — keyword search, up to max_results best matches
-- "+slack send" — require "slack" in the name, rank by remaining terms`
+Query 形式：
+- "select:Read,Edit,Grep"：按名称获取这些精确工具
+- "notebook jupyter"：关键词搜索，最多返回 max_results 个最佳匹配
+- "+slack send"：要求名称中包含 "slack"，并按剩余词排序`
 
 /**
  * Check if a tool should be deferred (requires ToolSearch to load).

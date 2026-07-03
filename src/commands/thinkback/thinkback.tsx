@@ -77,13 +77,13 @@ export async function playAnimation(skillDir: string): Promise<{
     if (isENOENT(e)) {
       return {
         success: false,
-        message: 'No animation found. Run /think-back first to generate one.'
+        message: '未找到动画。请先运行 /think-back 生成一个。'
       };
     }
     logError(e);
     return {
       success: false,
-      message: `Could not access animation data: ${toError(e).message}`
+      message: `无法访问动画数据：${toError(e).message}`
     };
   }
   try {
@@ -92,13 +92,13 @@ export async function playAnimation(skillDir: string): Promise<{
     if (isENOENT(e)) {
       return {
         success: false,
-        message: 'Player script not found. The player.js file is missing from the thinkback skill.'
+        message: '未找到播放器脚本。thinkback skill 中缺少 player.js 文件。'
       };
     }
     logError(e);
     return {
       success: false,
-      message: `Could not access player script: ${toError(e).message}`
+      message: `无法访问播放器脚本：${toError(e).message}`
     };
   }
 
@@ -107,7 +107,7 @@ export async function playAnimation(skillDir: string): Promise<{
   if (!inkInstance) {
     return {
       success: false,
-      message: 'Failed to access terminal instance'
+      message: '访问终端实例失败'
     };
   }
   inkInstance.enterAlternateScreen();
@@ -210,7 +210,7 @@ function ThinkbackInstaller({
           const result = await installSelectedPlugins([pluginId]);
           if (result.failed.length > 0) {
             const errorMsg = result.failed.map(f => `${f.name}: ${f.error}`).join(', ');
-            throw new Error(`Failed to install plugin: ${errorMsg}`);
+            throw new Error(`安装 plugin 失败：${errorMsg}`);
           }
           clearAllCaches();
           logForDebugging(`Plugin ${pluginId} installed`);
@@ -228,7 +228,7 @@ function ThinkbackInstaller({
             logForDebugging(`Enabling plugin ${pluginId}`);
             const enableResult = await enablePluginOp(pluginId);
             if (!enableResult.success) {
-              throw new Error(`Failed to enable plugin: ${enableResult.message}`);
+              throw new Error(`启用 plugin 失败：${enableResult.message}`);
             }
             clearAllCaches();
             logForDebugging(`Plugin ${pluginId} enabled`);
@@ -252,13 +252,13 @@ function ThinkbackInstaller({
   }, [onReady, onError]);
   if (state.phase === 'error') {
     return <Box flexDirection="column">
-        <Text color="error">Error: {state.message}</Text>
+        <Text color="error">错误：{state.message}</Text>
       </Box>;
   }
   if (state.phase === 'ready') {
     return null;
   }
-  const statusMessage = state.phase === 'checking' ? 'Checking thinkback installation…' : state.phase === 'installing-marketplace' ? 'Installing marketplace…' : state.phase === 'enabling-plugin' ? 'Enabling thinkback plugin…' : 'Installing thinkback plugin…';
+  const statusMessage = state.phase === 'checking' ? '正在检查 thinkback 安装状态…' : state.phase === 'installing-marketplace' ? '正在安装 marketplace…' : state.phase === 'enabling-plugin' ? '正在启用 thinkback plugin…' : '正在安装 thinkback plugin…';
   return <Box flexDirection="column">
       <Box>
         <Spinner />
@@ -280,25 +280,25 @@ function ThinkbackMenu(t0) {
   let t1;
   if ($[0] !== hasGenerated) {
     t1 = hasGenerated ? [{
-      label: "Play animation",
+      label: "播放动画",
       value: "play" as const,
-      description: "Watch your year in review"
+      description: "观看你的年度回顾"
     }, {
-      label: "Edit content",
+      label: "编辑内容",
       value: "edit" as const,
-      description: "Modify the animation"
+      description: "修改动画"
     }, {
-      label: "Fix errors",
+      label: "修复错误",
       value: "fix" as const,
-      description: "Fix validation or rendering issues"
+      description: "修复校验或渲染问题"
     }, {
-      label: "Regenerate",
+      label: "重新生成",
       value: "regenerate" as const,
-      description: "Create a new animation from scratch"
+      description: "从头创建新动画"
     }] : [{
-      label: "Let's go!",
+      label: "开始吧！",
       value: "regenerate" as const,
-      description: "Generate your personalized animation"
+      description: "生成你的个性化动画"
     }];
     $[0] = hasGenerated;
     $[1] = t1;
@@ -346,7 +346,7 @@ function ThinkbackMenu(t0) {
   }
   let t4;
   if ($[8] !== hasGenerated) {
-    t4 = !hasGenerated && <Box flexDirection="column"><Text>Relive your year of coding with Claude.</Text><Text dimColor={true}>{"We'll create a personalized ASCII animation celebrating your journey."}</Text></Box>;
+    t4 = !hasGenerated && <Box flexDirection="column"><Text>回顾你与 Claude 一起编码的一年。</Text><Text dimColor={true}>{"我们会创建一段个性化 ASCII 动画来纪念这段旅程。"}</Text></Box>;
     $[8] = hasGenerated;
     $[9] = t4;
   } else {
@@ -372,7 +372,7 @@ function ThinkbackMenu(t0) {
   }
   let t7;
   if ($[16] !== handleCancel || $[17] !== t6) {
-    t7 = <Dialog title="Think Back on 2025 with Claude Code" subtitle="Generate your 2025 Claude Code Think Back (takes a few minutes to run)" onCancel={handleCancel} color="claude">{t6}</Dialog>;
+    t7 = <Dialog title="用 Claude Code 回顾 2025" subtitle="生成你的 2025 Claude Code 回顾动画（需要运行几分钟）" onCancel={handleCancel} color="claude">{t6}</Dialog>;
     $[16] = handleCancel;
     $[17] = t6;
     $[18] = t7;
@@ -381,9 +381,9 @@ function ThinkbackMenu(t0) {
   }
   return t7;
 }
-const EDIT_PROMPT = 'Use the Skill tool to invoke the "thinkback" skill with mode=edit to modify my existing Claude Code year in review animation. Ask me what I want to change. When the animation is ready, tell the user to run /think-back again to play it.';
-const FIX_PROMPT = 'Use the Skill tool to invoke the "thinkback" skill with mode=fix to fix validation or rendering errors in my existing Claude Code year in review animation. Run the validator, identify errors, and fix them. When the animation is ready, tell the user to run /think-back again to play it.';
-const REGENERATE_PROMPT = 'Use the Skill tool to invoke the "thinkback" skill with mode=regenerate to create a completely new Claude Code year in review animation from scratch. Delete the existing animation and start fresh. When the animation is ready, tell the user to run /think-back again to play it.';
+const EDIT_PROMPT = '使用 Skill 工具调用 "thinkback" skill，并传入 mode=edit，修改我现有的 Claude Code 年度回顾动画。先询问我想改什么。动画准备好后，告诉用户再次运行 /think-back 来播放。';
+const FIX_PROMPT = '使用 Skill 工具调用 "thinkback" skill，并传入 mode=fix，修复我现有 Claude Code 年度回顾动画中的校验或渲染错误。运行校验器，定位错误并修复。动画准备好后，告诉用户再次运行 /think-back 来播放。';
+const REGENERATE_PROMPT = '使用 Skill 工具调用 "thinkback" skill，并传入 mode=regenerate，从头创建一个全新的 Claude Code 年度回顾动画。删除现有动画并重新开始。动画准备好后，告诉用户再次运行 /think-back 来播放。';
 function ThinkbackFlow(t0) {
   const $ = _c(27);
   const {
@@ -407,7 +407,7 @@ function ThinkbackFlow(t0) {
   if ($[1] !== onDone) {
     t2 = message => {
       setInstallError(message);
-      onDone(`Error with thinkback: ${message}. Try running /plugin to manually install the think-back plugin.`, {
+      onDone(`thinkback 出错：${message}。可以运行 /plugin 手动安装 think-back plugin。`, {
         display: "system"
       });
     };
@@ -488,7 +488,7 @@ function ThinkbackFlow(t0) {
   if (installError) {
     let t8;
     if ($[14] !== installError) {
-      t8 = <Text color="error">Error: {installError}</Text>;
+      t8 = <Text color="error">错误：{installError}</Text>;
       $[14] = installError;
       $[15] = t8;
     } else {
@@ -496,7 +496,7 @@ function ThinkbackFlow(t0) {
     }
     let t9;
     if ($[16] === Symbol.for("react.memo_cache_sentinel")) {
-      t9 = <Text dimColor={true}>Try running /plugin to manually install the think-back plugin.</Text>;
+      t9 = <Text dimColor={true}>可以运行 /plugin 手动安装 think-back plugin。</Text>;
       $[16] = t9;
     } else {
       t9 = $[16];

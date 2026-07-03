@@ -185,12 +185,12 @@ function SetModelAndClose({
         if (valid) {
           setModel(model);
         } else {
-          onDone(error_0 || `Model '${model}' not found`, {
+          onDone(error_0 || `找不到模型 '${model}'`, {
             display: 'system'
           });
         }
       } catch (error) {
-        onDone(`Failed to validate model: ${(error as Error).message}`, {
+        onDone(`校验模型失败：${(error as Error).message}`, {
           display: 'system'
         });
       }

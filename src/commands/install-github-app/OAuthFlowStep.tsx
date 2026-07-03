@@ -32,7 +32,7 @@ type OAuthStatus = {
   state: 'about_to_retry';
   nextState: OAuthStatus;
 };
-const PASTE_HERE_MSG = 'Paste code here if prompted > ';
+const PASTE_HERE_MSG = '如有提示，请在此粘贴 code > ';
 export function OAuthFlowStep({
   onSuccess,
   onCancel
@@ -71,7 +71,7 @@ export function OAuthFlowStep({
       if (!authorizationCode || !state) {
         setOAuthStatus({
           state: 'error',
-          message: 'Invalid code. Please make sure the full code was copied',
+          message: '无效代码。请确认已复制完整代码',
           toRetry: {
             state: 'waiting_for_login',
             url
@@ -200,14 +200,14 @@ export function OAuthFlowStep({
       case 'starting':
         return <Box>
             <Spinner />
-            <Text>Starting authentication…</Text>
+            <Text>正在启动认证...</Text>
           </Box>;
       case 'waiting_for_login':
         return <Box flexDirection="column" gap={1}>
             {!showPastePrompt && <Box>
                 <Spinner />
                 <Text>
-                  Opening browser to sign in with your Claude account…
+                  正在打开浏览器登录你的 Claude 账号...
                 </Text>
               </Box>}
 
@@ -219,25 +219,25 @@ export function OAuthFlowStep({
       case 'processing':
         return <Box>
             <Spinner />
-            <Text>Processing authentication…</Text>
+            <Text>正在处理认证...</Text>
           </Box>;
       case 'success':
         return <Box flexDirection="column" gap={1}>
             <Text color="success">
-              ✓ Authentication token created successfully!
+              ✓ 认证 token 创建成功！
             </Text>
-            <Text dimColor>Using token for GitHub Actions setup…</Text>
+            <Text dimColor>正在使用 token 设置 GitHub Actions...</Text>
           </Box>;
       case 'error':
         return <Box flexDirection="column" gap={1}>
-            <Text color="error">OAuth error: {oauthStatus.message}</Text>
+            <Text color="error">OAuth 错误：{oauthStatus.message}</Text>
             {oauthStatus.toRetry ? <Text dimColor>
-                Press Enter to try again, or any other key to cancel
-              </Text> : <Text dimColor>Press any key to return to API key selection</Text>}
+                按 Enter 重试，或按任意其他键取消
+              </Text> : <Text dimColor>按任意键返回 API key 选择</Text>}
           </Box>;
       case 'about_to_retry':
         return <Box flexDirection="column" gap={1}>
-            <Text color="permission">Retrying…</Text>
+            <Text color="permission">正在重试...</Text>
           </Box>;
       default:
         return null;
@@ -246,22 +246,22 @@ export function OAuthFlowStep({
   return <Box flexDirection="column" gap={1} tabIndex={0} autoFocus onKeyDown={handleKeyDown}>
       {/* Show header inline only for initial starting state */}
       {oauthStatus.state === 'starting' && <Box flexDirection="column" gap={1} paddingBottom={1}>
-          <Text bold>Create Authentication Token</Text>
-          <Text dimColor>Creating a long-lived token for GitHub Actions</Text>
+          <Text bold>创建认证 Token</Text>
+          <Text dimColor>正在为 GitHub Actions 创建长期有效的 token</Text>
         </Box>}
       {/* Show header for non-starting states (to avoid duplicate with inline header)*/}
       {oauthStatus.state !== 'success' && oauthStatus.state !== 'starting' && oauthStatus.state !== 'processing' && <Box key="header" flexDirection="column" gap={1} paddingBottom={1}>
-            <Text bold>Create Authentication Token</Text>
-            <Text dimColor>Creating a long-lived token for GitHub Actions</Text>
+            <Text bold>创建认证 Token</Text>
+            <Text dimColor>正在为 GitHub Actions 创建长期有效的 token</Text>
           </Box>}
       {/* Show URL when paste prompt is visible */}
       {oauthStatus.state === 'waiting_for_login' && showPastePrompt && <Box flexDirection="column" key="urlToCopy" gap={1} paddingBottom={1}>
           <Box paddingX={1}>
             <Text dimColor>
-              Browser didn&apos;t open? Use the url below to sign in{' '}
+              浏览器没有打开？请使用下面的 URL 登录{' '}
             </Text>
-            {urlCopied ? <Text color="success">(Copied!)</Text> : <Text dimColor>
-                <KeyboardShortcutHint shortcut="c" action="copy" parens />
+            {urlCopied ? <Text color="success">（已复制！）</Text> : <Text dimColor>
+                <KeyboardShortcutHint shortcut="c" action="复制" parens />
               </Text>}
           </Box>
           <Link url={oauthStatus.url}>

@@ -16,260 +16,260 @@ const proactiveModule =
 // no text output → falls through to the streaming fallback (2.79% on 4.6 vs
 // 0.01% on 4.5). Putting this FIRST and making it explicit about rejection
 // consequences prevents the wasted turn.
-const NO_TOOLS_PREAMBLE = `CRITICAL: Respond with TEXT ONLY. Do NOT call any tools.
+const NO_TOOLS_PREAMBLE = `严重：只能用文本回复。不要调用任何工具。
 
-- Do NOT use Read, Bash, Grep, Glob, Edit, Write, or ANY other tool.
-- You already have all the context you need in the conversation above.
-- Tool calls will be REJECTED and will waste your only turn — you will fail the task.
-- Your entire response must be plain text: an <analysis> block followed by a <summary> block.
+- 不要使用 Read、Bash、Grep、Glob、Edit、Write 或任何其他工具。
+- 你已经在上方对话中拥有所需的全部上下文。
+- 工具调用会被拒绝，并浪费你唯一的回合；这样会导致任务失败。
+- 你的完整回复必须是纯文本：先输出一个 <analysis> 块，再输出一个 <summary> 块。
 
 `
 
 // Two variants: BASE scopes to "the conversation", PARTIAL scopes to "the
 // recent messages". The <analysis> block is a drafting scratchpad that
 // formatCompactSummary() strips before the summary reaches context.
-const DETAILED_ANALYSIS_INSTRUCTION_BASE = `Before providing your final summary, wrap your analysis in <analysis> tags to organize your thoughts and ensure you've covered all necessary points. In your analysis process:
+const DETAILED_ANALYSIS_INSTRUCTION_BASE = `在给出最终总结前，请用 <analysis> 标签包裹你的分析，以组织思路并确保覆盖所有必要要点。分析过程中：
 
-1. Chronologically analyze each message and section of the conversation. For each section thoroughly identify:
-   - The user's explicit requests and intents
-   - Your approach to addressing the user's requests
-   - Key decisions, technical concepts and code patterns
-   - Specific details like:
-     - file names
-     - full code snippets
-     - function signatures
-     - file edits
-   - Errors that you ran into and how you fixed them
-   - Pay special attention to specific user feedback that you received, especially if the user told you to do something differently.
-2. Double-check for technical accuracy and completeness, addressing each required element thoroughly.`
+1. 按时间顺序分析对话中的每条消息和每个部分。对每个部分都要充分识别：
+   - 用户的明确请求和意图
+   - 你处理用户请求的方法
+   - 关键决策、技术概念和代码模式
+   - 具体细节，例如：
+     - 文件名
+     - 完整代码片段
+     - 函数签名
+     - 文件编辑
+   - 你遇到的错误以及如何修复
+   - 特别注意你收到的具体用户反馈，尤其是用户要求你改用不同做法时。
+2. 复查技术准确性和完整性，充分覆盖每个必需元素。`
 
-const DETAILED_ANALYSIS_INSTRUCTION_PARTIAL = `Before providing your final summary, wrap your analysis in <analysis> tags to organize your thoughts and ensure you've covered all necessary points. In your analysis process:
+const DETAILED_ANALYSIS_INSTRUCTION_PARTIAL = `在给出最终总结前，请用 <analysis> 标签包裹你的分析，以组织思路并确保覆盖所有必要要点。分析过程中：
 
-1. Analyze the recent messages chronologically. For each section thoroughly identify:
-   - The user's explicit requests and intents
-   - Your approach to addressing the user's requests
-   - Key decisions, technical concepts and code patterns
-   - Specific details like:
-     - file names
-     - full code snippets
-     - function signatures
-     - file edits
-   - Errors that you ran into and how you fixed them
-   - Pay special attention to specific user feedback that you received, especially if the user told you to do something differently.
-2. Double-check for technical accuracy and completeness, addressing each required element thoroughly.`
+1. 按时间顺序分析最近消息。对每个部分都要充分识别：
+   - 用户的明确请求和意图
+   - 你处理用户请求的方法
+   - 关键决策、技术概念和代码模式
+   - 具体细节，例如：
+     - 文件名
+     - 完整代码片段
+     - 函数签名
+     - 文件编辑
+   - 你遇到的错误以及如何修复
+   - 特别注意你收到的具体用户反馈，尤其是用户要求你改用不同做法时。
+2. 复查技术准确性和完整性，充分覆盖每个必需元素。`
 
-const BASE_COMPACT_PROMPT = `Your task is to create a detailed summary of the conversation so far, paying close attention to the user's explicit requests and your previous actions.
-This summary should be thorough in capturing technical details, code patterns, and architectural decisions that would be essential for continuing development work without losing context.
+const BASE_COMPACT_PROMPT = `你的任务是为目前为止的对话创建详细总结，特别关注用户的明确请求以及你此前采取的行动。
+总结应充分捕获技术细节、代码模式和架构决策，这些信息对在不丢失上下文的情况下继续开发工作至关重要。
 
 ${DETAILED_ANALYSIS_INSTRUCTION_BASE}
 
-Your summary should include the following sections:
+你的总结应包含以下章节：
 
-1. Primary Request and Intent: Capture all of the user's explicit requests and intents in detail
-2. Key Technical Concepts: List all important technical concepts, technologies, and frameworks discussed.
-3. Files and Code Sections: Enumerate specific files and code sections examined, modified, or created. Pay special attention to the most recent messages and include full code snippets where applicable and include a summary of why this file read or edit is important.
-4. Errors and fixes: List all errors that you ran into, and how you fixed them. Pay special attention to specific user feedback that you received, especially if the user told you to do something differently.
-5. Problem Solving: Document problems solved and any ongoing troubleshooting efforts.
-6. All user messages: List ALL user messages that are not tool results. These are critical for understanding the users' feedback and changing intent.
-7. Pending Tasks: Outline any pending tasks that you have explicitly been asked to work on.
-8. Current Work: Describe in detail precisely what was being worked on immediately before this summary request, paying special attention to the most recent messages from both user and assistant. Include file names and code snippets where applicable.
-9. Optional Next Step: List the next step that you will take that is related to the most recent work you were doing. IMPORTANT: ensure that this step is DIRECTLY in line with the user's most recent explicit requests, and the task you were working on immediately before this summary request. If your last task was concluded, then only list next steps if they are explicitly in line with the users request. Do not start on tangential requests or really old requests that were already completed without confirming with the user first.
-                       If there is a next step, include direct quotes from the most recent conversation showing exactly what task you were working on and where you left off. This should be verbatim to ensure there's no drift in task interpretation.
+1. 主要请求和意图：详细捕获用户的所有明确请求和意图
+2. 关键技术概念：列出讨论过的所有重要技术概念、技术和框架。
+3. 文件和代码片段：列出检查、修改或创建过的具体文件和代码片段。特别注意最近消息；适用时包含完整代码片段，并总结为什么该文件读取或编辑重要。
+4. 错误和修复：列出遇到的所有错误以及如何修复。特别注意收到的具体用户反馈，尤其是用户要求你改用不同做法时。
+5. 问题解决：记录已解决的问题以及仍在进行的排障工作。
+6. 所有用户消息：列出所有非工具结果的用户消息。这些对理解用户反馈和意图变化至关重要。
+7. 待办任务：概述用户明确要求你处理但尚未完成的任务。
+8. 当前工作：详细描述这次总结请求前正在处理的具体工作，特别关注用户和助手最近消息。适用时包含文件名和代码片段。
+9. 可选下一步：列出与你最近工作直接相关的下一步。重要：确保这一步直接符合用户最近的明确请求，以及总结请求前你正在处理的任务。如果上一项任务已经结束，只有在下一步明确符合用户请求时才列出。不要在未先向用户确认的情况下开始无关请求或很久以前已完成的旧请求。
+                       如果有下一步，请包含最近对话的直接引用，精确显示你正在处理什么任务以及停在哪里。引用应逐字保留，避免任务理解漂移。
 
-Here's an example of how your output should be structured:
+下面是输出结构示例：
 
 <example>
 <analysis>
-[Your thought process, ensuring all points are covered thoroughly and accurately]
+[你的思考过程，确保所有要点都被充分且准确覆盖]
 </analysis>
 
 <summary>
-1. Primary Request and Intent:
-   [Detailed description]
+1. 主要请求和意图：
+   [详细描述]
 
-2. Key Technical Concepts:
-   - [Concept 1]
-   - [Concept 2]
+2. 关键技术概念：
+   - [概念 1]
+   - [概念 2]
    - [...]
 
-3. Files and Code Sections:
-   - [File Name 1]
-      - [Summary of why this file is important]
-      - [Summary of the changes made to this file, if any]
-      - [Important Code Snippet]
-   - [File Name 2]
-      - [Important Code Snippet]
+3. 文件和代码片段：
+   - [文件名 1]
+      - [为什么此文件重要的总结]
+      - [对此文件所做更改的总结，如有]
+      - [重要代码片段]
+   - [文件名 2]
+      - [重要代码片段]
    - [...]
 
-4. Errors and fixes:
-    - [Detailed description of error 1]:
-      - [How you fixed the error]
-      - [User feedback on the error if any]
+4. 错误和修复：
+    - [错误 1 的详细描述]：
+      - [你如何修复该错误]
+      - [如有，用户对该错误的反馈]
     - [...]
 
-5. Problem Solving:
-   [Description of solved problems and ongoing troubleshooting]
+5. 问题解决：
+   [已解决问题和仍在进行的排障描述]
 
-6. All user messages: 
-    - [Detailed non tool use user message]
+6. 所有用户消息：
+    - [详细的非工具结果用户消息]
     - [...]
 
-7. Pending Tasks:
-   - [Task 1]
-   - [Task 2]
+7. 待办任务：
+   - [任务 1]
+   - [任务 2]
    - [...]
 
-8. Current Work:
-   [Precise description of current work]
+8. 当前工作：
+   [当前工作的精确描述]
 
-9. Optional Next Step:
-   [Optional Next step to take]
+9. 可选下一步：
+   [可选的下一步行动]
 
 </summary>
 </example>
 
-Please provide your summary based on the conversation so far, following this structure and ensuring precision and thoroughness in your response. 
+请基于目前为止的对话提供总结，遵循此结构，并确保回复精确、详尽。
 
-There may be additional summarization instructions provided in the included context. If so, remember to follow these instructions when creating the above summary. Examples of instructions include:
+包含的上下文中可能还有额外总结说明。如果有，请在创建上述总结时遵循这些说明。说明示例：
 <example>
-## Compact Instructions
-When summarizing the conversation focus on typescript code changes and also remember the mistakes you made and how you fixed them.
+## 压缩说明
+总结对话时，请关注 typescript 代码变更，并记住你犯过的错误以及如何修复它们。
 </example>
 
 <example>
-# Summary instructions
-When you are using compact - please focus on test output and code changes. Include file reads verbatim.
+# 总结说明
+使用 compact 时，请重点关注测试输出和代码变更。逐字包含文件读取内容。
 </example>
 `
 
-const PARTIAL_COMPACT_PROMPT = `Your task is to create a detailed summary of the RECENT portion of the conversation — the messages that follow earlier retained context. The earlier messages are being kept intact and do NOT need to be summarized. Focus your summary on what was discussed, learned, and accomplished in the recent messages only.
+const PARTIAL_COMPACT_PROMPT = `你的任务是为对话的最近部分创建详细总结，也就是早期保留上下文之后的消息。早期消息会被完整保留，不需要总结。总结只聚焦最近消息中讨论、学到和完成的内容。
 
 ${DETAILED_ANALYSIS_INSTRUCTION_PARTIAL}
 
-Your summary should include the following sections:
+你的总结应包含以下章节：
 
-1. Primary Request and Intent: Capture the user's explicit requests and intents from the recent messages
-2. Key Technical Concepts: List important technical concepts, technologies, and frameworks discussed recently.
-3. Files and Code Sections: Enumerate specific files and code sections examined, modified, or created. Include full code snippets where applicable and include a summary of why this file read or edit is important.
-4. Errors and fixes: List errors encountered and how they were fixed.
-5. Problem Solving: Document problems solved and any ongoing troubleshooting efforts.
-6. All user messages: List ALL user messages from the recent portion that are not tool results.
-7. Pending Tasks: Outline any pending tasks from the recent messages.
-8. Current Work: Describe precisely what was being worked on immediately before this summary request.
-9. Optional Next Step: List the next step related to the most recent work. Include direct quotes from the most recent conversation.
+1. 主要请求和意图：捕获最近消息中用户的明确请求和意图
+2. 关键技术概念：列出最近讨论的重要技术概念、技术和框架。
+3. 文件和代码片段：列出检查、修改或创建过的具体文件和代码片段。适用时包含完整代码片段，并总结为什么该文件读取或编辑重要。
+4. 错误和修复：列出遇到的错误以及如何修复。
+5. 问题解决：记录已解决的问题以及仍在进行的排障工作。
+6. 所有用户消息：列出最近部分中所有非工具结果的用户消息。
+7. 待办任务：概述最近消息中的任何待办任务。
+8. 当前工作：精确描述此总结请求前正在处理的工作。
+9. 可选下一步：列出与最近工作相关的下一步。包含最近对话的直接引用。
 
-Here's an example of how your output should be structured:
+下面是输出结构示例：
 
 <example>
 <analysis>
-[Your thought process, ensuring all points are covered thoroughly and accurately]
+[你的思考过程，确保所有要点都被充分且准确覆盖]
 </analysis>
 
 <summary>
-1. Primary Request and Intent:
-   [Detailed description]
+1. 主要请求和意图：
+   [详细描述]
 
-2. Key Technical Concepts:
-   - [Concept 1]
-   - [Concept 2]
+2. 关键技术概念：
+   - [概念 1]
+   - [概念 2]
 
-3. Files and Code Sections:
-   - [File Name 1]
-      - [Summary of why this file is important]
-      - [Important Code Snippet]
+3. 文件和代码片段：
+   - [文件名 1]
+      - [为什么此文件重要的总结]
+      - [重要代码片段]
 
-4. Errors and fixes:
-    - [Error description]:
-      - [How you fixed it]
+4. 错误和修复：
+    - [错误描述]：
+      - [你如何修复它]
 
-5. Problem Solving:
-   [Description]
+5. 问题解决：
+   [描述]
 
-6. All user messages:
-    - [Detailed non tool use user message]
+6. 所有用户消息：
+    - [详细的非工具结果用户消息]
 
-7. Pending Tasks:
-   - [Task 1]
+7. 待办任务：
+   - [任务 1]
 
-8. Current Work:
-   [Precise description of current work]
+8. 当前工作：
+   [当前工作的精确描述]
 
-9. Optional Next Step:
-   [Optional Next step to take]
+9. 可选下一步：
+   [可选的下一步行动]
 
 </summary>
 </example>
 
-Please provide your summary based on the RECENT messages only (after the retained earlier context), following this structure and ensuring precision and thoroughness in your response.
+请只基于最近消息（保留的早期上下文之后的内容）提供总结，遵循此结构，并确保回复精确、详尽。
 `
 
 // 'up_to': model sees only the summarized prefix (cache hit). Summary will
 // precede kept recent messages, hence "Context for Continuing Work" section.
-const PARTIAL_COMPACT_UP_TO_PROMPT = `Your task is to create a detailed summary of this conversation. This summary will be placed at the start of a continuing session; newer messages that build on this context will follow after your summary (you do not see them here). Summarize thoroughly so that someone reading only your summary and then the newer messages can fully understand what happened and continue the work.
+const PARTIAL_COMPACT_UP_TO_PROMPT = `你的任务是为这段对话创建详细总结。此总结会放在后续会话的开头；在你的总结之后会接上基于此上下文的新消息（你在这里看不到它们）。请充分总结，让只阅读你的总结和后续新消息的人也能完整理解发生了什么并继续工作。
 
 ${DETAILED_ANALYSIS_INSTRUCTION_BASE}
 
-Your summary should include the following sections:
+你的总结应包含以下章节：
 
-1. Primary Request and Intent: Capture the user's explicit requests and intents in detail
-2. Key Technical Concepts: List important technical concepts, technologies, and frameworks discussed.
-3. Files and Code Sections: Enumerate specific files and code sections examined, modified, or created. Include full code snippets where applicable and include a summary of why this file read or edit is important.
-4. Errors and fixes: List errors encountered and how they were fixed.
-5. Problem Solving: Document problems solved and any ongoing troubleshooting efforts.
-6. All user messages: List ALL user messages that are not tool results.
-7. Pending Tasks: Outline any pending tasks.
-8. Work Completed: Describe what was accomplished by the end of this portion.
-9. Context for Continuing Work: Summarize any context, decisions, or state that would be needed to understand and continue the work in subsequent messages.
+1. 主要请求和意图：详细捕获用户的明确请求和意图
+2. 关键技术概念：列出讨论过的重要技术概念、技术和框架。
+3. 文件和代码片段：列出检查、修改或创建过的具体文件和代码片段。适用时包含完整代码片段，并总结为什么该文件读取或编辑重要。
+4. 错误和修复：列出遇到的错误以及如何修复。
+5. 问题解决：记录已解决的问题以及仍在进行的排障工作。
+6. 所有用户消息：列出所有非工具结果的用户消息。
+7. 待办任务：概述任何待办任务。
+8. 已完成工作：描述此部分结束时已完成的内容。
+9. 继续工作的上下文：总结后续消息中理解和继续工作所需的上下文、决策或状态。
 
-Here's an example of how your output should be structured:
+下面是输出结构示例：
 
 <example>
 <analysis>
-[Your thought process, ensuring all points are covered thoroughly and accurately]
+[你的思考过程，确保所有要点都被充分且准确覆盖]
 </analysis>
 
 <summary>
-1. Primary Request and Intent:
-   [Detailed description]
+1. 主要请求和意图：
+   [详细描述]
 
-2. Key Technical Concepts:
-   - [Concept 1]
-   - [Concept 2]
+2. 关键技术概念：
+   - [概念 1]
+   - [概念 2]
 
-3. Files and Code Sections:
-   - [File Name 1]
-      - [Summary of why this file is important]
-      - [Important Code Snippet]
+3. 文件和代码片段：
+   - [文件名 1]
+      - [为什么此文件重要的总结]
+      - [重要代码片段]
 
-4. Errors and fixes:
-    - [Error description]:
-      - [How you fixed it]
+4. 错误和修复：
+    - [错误描述]：
+      - [你如何修复它]
 
-5. Problem Solving:
-   [Description]
+5. 问题解决：
+   [描述]
 
-6. All user messages:
-    - [Detailed non tool use user message]
+6. 所有用户消息：
+    - [详细的非工具结果用户消息]
 
-7. Pending Tasks:
-   - [Task 1]
+7. 待办任务：
+   - [任务 1]
 
-8. Work Completed:
-   [Description of what was accomplished]
+8. 已完成工作：
+   [已完成内容的描述]
 
-9. Context for Continuing Work:
-   [Key context, decisions, or state needed to continue the work]
+9. 继续工作的上下文：
+   [继续工作所需的关键上下文、决策或状态]
 
 </summary>
 </example>
 
-Please provide your summary following this structure, ensuring precision and thoroughness in your response.
+请按照此结构提供总结，并确保回复精确、详尽。
 `
 
 const NO_TOOLS_TRAILER =
-  '\n\nREMINDER: Do NOT call any tools. Respond with plain text only — ' +
-  'an <analysis> block followed by a <summary> block. ' +
-  'Tool calls will be rejected and you will fail the task.'
+  '\n\n提醒：不要调用任何工具。只能用纯文本回复，' +
+  '先输出一个 <analysis> 块，再输出一个 <summary> 块。' +
+  '工具调用会被拒绝，并导致任务失败。'
 
 export function getPartialCompactPrompt(
   customInstructions?: string,
@@ -282,7 +282,7 @@ export function getPartialCompactPrompt(
   let prompt = NO_TOOLS_PREAMBLE + template
 
   if (customInstructions && customInstructions.trim() !== '') {
-    prompt += `\n\nAdditional Instructions:\n${customInstructions}`
+    prompt += `\n\n额外说明：\n${customInstructions}`
   }
 
   prompt += NO_TOOLS_TRAILER
@@ -294,7 +294,7 @@ export function getCompactPrompt(customInstructions?: string): string {
   let prompt = NO_TOOLS_PREAMBLE + BASE_COMPACT_PROMPT
 
   if (customInstructions && customInstructions.trim() !== '') {
-    prompt += `\n\nAdditional Instructions:\n${customInstructions}`
+    prompt += `\n\n额外说明：\n${customInstructions}`
   }
 
   prompt += NO_TOOLS_TRAILER
@@ -324,7 +324,7 @@ export function formatCompactSummary(summary: string): string {
     const content = summaryMatch[1] || ''
     formattedSummary = formattedSummary.replace(
       /<summary>[\s\S]*?<\/summary>/,
-      `Summary:\n${content.trim()}`,
+      `总结：\n${content.trim()}`,
     )
   }
 
@@ -342,21 +342,21 @@ export function getCompactUserSummaryMessage(
 ): string {
   const formattedSummary = formatCompactSummary(summary)
 
-  let baseSummary = `This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+  let baseSummary = `此会话正在从一个耗尽上下文的先前对话继续。下面的总结覆盖对话中较早的部分。
 
 ${formattedSummary}`
 
   if (transcriptPath) {
-    baseSummary += `\n\nIf you need specific details from before compaction (like exact code snippets, error messages, or content you generated), read the full transcript at: ${transcriptPath}`
+    baseSummary += `\n\n如果你需要压缩前的具体细节（例如精确代码片段、错误消息或你生成的内容），请读取完整转录：${transcriptPath}`
   }
 
   if (recentMessagesPreserved) {
-    baseSummary += `\n\nRecent messages are preserved verbatim.`
+    baseSummary += `\n\n最近消息已逐字保留。`
   }
 
   if (suppressFollowUpQuestions) {
     let continuation = `${baseSummary}
-Continue the conversation from where it left off without asking the user any further questions. Resume directly — do not acknowledge the summary, do not recap what was happening, do not preface with "I'll continue" or similar. Pick up the last task as if the break never happened.`
+从中断处继续对话，不要再向用户提问。直接恢复：不要确认总结，不要复述刚才发生了什么，不要用“我会继续”或类似开场。像中断从未发生一样接着最后的任务做。`
 
     if (
       (feature('PROACTIVE') || feature('KAIROS')) &&
@@ -364,7 +364,7 @@ Continue the conversation from where it left off without asking the user any fur
     ) {
       continuation += `
 
-You are running in autonomous/proactive mode. This is NOT a first wake-up — you were already working autonomously before compaction. Continue your work loop: pick up where you left off based on the summary above. Do not greet the user or ask what to work on.`
+你正在自主/主动模式下运行。这不是第一次唤醒；压缩前你已经在自主工作。请继续你的工作循环：基于上方总结从中断处接着做。不要问候用户，也不要询问要做什么。`
     }
 
     return continuation

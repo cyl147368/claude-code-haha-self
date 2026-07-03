@@ -377,18 +377,18 @@ const extractMemoriesModule = feature('EXTRACT_MEMORIES')
 /* eslint-enable @typescript-eslint/no-require-imports */
 
 const SHUTDOWN_TEAM_PROMPT = `<system-reminder>
-You are running in non-interactive mode and cannot return a response to the user until your team is shut down.
+你正在非交互模式下运行。在 team 完全关闭之前，不能向用户返回响应。
 
-You MUST shut down your team before preparing your final response:
-1. Use requestShutdown to ask each team member to shut down gracefully
-2. Wait for shutdown approvals
-3. Use the cleanup operation to clean up the team
-4. Only then provide your final response to the user
+准备最终回复前，必须先关闭你的 team：
+1. 使用 requestShutdown 请求每个 team member 优雅关闭
+2. 等待 shutdown approvals
+3. 使用 cleanup operation 清理 team
+4. 然后才能向用户提供最终回复
 
-The user cannot receive your response until the team is completely shut down.
+在 team 完全关闭前，用户无法收到你的回复。
 </system-reminder>
 
-Shut down your team and prepare your final response for the user.`
+关闭你的 team，并为用户准备最终回复。`
 
 // Track message UUIDs received during the current session runtime
 const MAX_RECEIVED_UUIDS = 10_000
@@ -565,20 +565,20 @@ export async function runHeadless(
   void initializeGrowthBook()
 
   if (options.resumeSessionAt && !options.resume) {
-    process.stderr.write(`Error: --resume-session-at requires --resume\n`)
+    process.stderr.write(`错误：--resume-session-at 需要同时使用 --resume\n`)
     gracefulShutdownSync(1)
     return
   }
 
   if (options.rewindFiles && !options.resume) {
-    process.stderr.write(`Error: --rewind-files requires --resume\n`)
+    process.stderr.write(`错误：--rewind-files 需要同时使用 --resume\n`)
     gracefulShutdownSync(1)
     return
   }
 
   if (options.rewindFiles && inputPrompt) {
     process.stderr.write(
-      `Error: --rewind-files is a standalone operation and cannot be used with a prompt\n`,
+      `错误：--rewind-files 是独立操作，不能与提示词一起使用\n`,
     )
     gracefulShutdownSync(1)
     return
@@ -602,15 +602,15 @@ export async function runHeadless(
   if (sandboxUnavailableReason) {
     if (SandboxManager.isSandboxRequired()) {
       process.stderr.write(
-        `\nError: sandbox required but unavailable: ${sandboxUnavailableReason}\n` +
-          `  sandbox.failIfUnavailable is set — refusing to start without a working sandbox.\n\n`,
+        `\n错误：要求使用 sandbox，但当前不可用：${sandboxUnavailableReason}\n` +
+          `  已设置 sandbox.failIfUnavailable，没有可用 sandbox 时拒绝启动。\n\n`,
       )
       gracefulShutdownSync(1)
       return
     }
     process.stderr.write(
-      `\n⚠ Sandbox disabled: ${sandboxUnavailableReason}\n` +
-        `  Commands will run WITHOUT sandboxing. Network and filesystem restrictions will NOT be enforced.\n\n`,
+      `\n⚠ Sandbox 已禁用：${sandboxUnavailableReason}\n` +
+        `  命令将在没有 sandbox 的情况下运行。网络和文件系统限制不会被强制执行。\n\n`,
     )
   } else if (SandboxManager.isSandboxingEnabled()) {
     // Initialize sandbox with a callback that forwards network permission
@@ -619,7 +619,7 @@ export async function runHeadless(
     try {
       await SandboxManager.initialize(structuredIO.createSandboxAskCallback())
     } catch (err) {
-      process.stderr.write(`\n❌ Sandbox Error: ${errorMessage(err)}\n`)
+      process.stderr.write(`\n❌ Sandbox 错误：${errorMessage(err)}\n`)
       gracefulShutdownSync(1, 'other')
       return
     }
@@ -743,7 +743,7 @@ export async function runHeadless(
 
     if (!targetMessage || targetMessage.type !== 'user') {
       process.stderr.write(
-        `Error: --rewind-files requires a user message UUID, but ${options.rewindFiles} is not a user message in this session\n`,
+        `错误：--rewind-files 需要用户消息 UUID，但 ${options.rewindFiles} 不是此会话中的用户消息\n`,
       )
       gracefulShutdownSync(1)
       return
@@ -757,14 +757,14 @@ export async function runHeadless(
       false,
     )
     if (!result.canRewind) {
-      process.stderr.write(`Error: ${result.error || 'Unexpected error'}\n`)
+      process.stderr.write(`错误：${result.error || '意外错误'}\n`)
       gracefulShutdownSync(1)
       return
     }
 
     // Rewind complete - exit successfully
     process.stdout.write(
-      `Files rewound to state at message ${options.rewindFiles}\n`,
+      `文件已回退到消息 ${options.rewindFiles} 时的状态\n`,
     )
     gracefulShutdownSync(0)
     return
@@ -778,7 +778,7 @@ export async function runHeadless(
 
   if (!inputPrompt && !hasValidResumeSessionId && !isUsingSdkUrl) {
     process.stderr.write(
-      `Error: Input must be provided either through stdin or as a prompt argument when using --print\n`,
+      `错误：使用 --print 时，必须通过 stdin 或提示词参数提供输入\n`,
     )
     gracefulShutdownSync(1)
     return
@@ -786,7 +786,7 @@ export async function runHeadless(
 
   if (options.outputFormat === 'stream-json' && !options.verbose) {
     process.stderr.write(
-      'Error: When using --print, --output-format=stream-json requires --verbose\n',
+      '错误：使用 --print 时，--output-format=stream-json 需要同时使用 --verbose\n',
     )
     gracefulShutdownSync(1)
     return
@@ -917,7 +917,7 @@ export async function runHeadless(
   switch (options.outputFormat) {
     case 'json':
       if (!lastMessage || lastMessage.type !== 'result') {
-        throw new Error('No messages returned')
+        throw new Error('未返回消息')
       }
       if (options.verbose) {
         writeToStdout(jsonStringify(messages) + '\n')
@@ -930,7 +930,7 @@ export async function runHeadless(
       break
     default:
       if (!lastMessage || lastMessage.type !== 'result') {
-        throw new Error('No messages returned')
+        throw new Error('未返回消息')
       }
       switch (lastMessage.subtype) {
         case 'success':
@@ -941,17 +941,17 @@ export async function runHeadless(
           )
           break
         case 'error_during_execution':
-          writeToStdout(`Execution error`)
+          writeToStdout(`执行出错`)
           break
         case 'error_max_turns':
-          writeToStdout(`Error: Reached max turns (${options.maxTurns})`)
+          writeToStdout(`错误：已达到最大轮数（${options.maxTurns}）`)
           break
         case 'error_max_budget_usd':
-          writeToStdout(`Error: Exceeded USD budget (${options.maxBudgetUsd})`)
+          writeToStdout(`错误：已超出美元预算（${options.maxBudgetUsd}）`)
           break
         case 'error_max_structured_output_retries':
           writeToStdout(
-            `Error: Failed to provide valid structured output after maximum retries`,
+            `错误：达到最大重试次数后仍未生成有效的结构化输出`,
           )
       }
   }
@@ -3005,7 +3005,7 @@ function runHeadlessStreaming(
           } else {
             sendControlResponseError(
               message,
-              result.error ?? 'Unexpected error',
+              result.error ?? '意外错误',
             )
           }
         } else if (message.request.subtype === 'cancel_async_message') {
@@ -3480,7 +3480,7 @@ function runHeadlessStreaming(
             if (!hasCodeOrError) {
               sendControlResponseError(
                 message,
-                'Invalid callback URL: missing authorization code. Please paste the full redirect URL including the code parameter.',
+                '回调 URL 无效：缺少授权码。请粘贴包含 code 参数的完整重定向 URL。',
               )
             } else {
               oauthManualCallbackUsed.add(serverName)
@@ -3658,11 +3658,11 @@ function runHeadlessStreaming(
               ?.config ??
             null
           if (!config) {
-            sendControlResponseError(message, `Server not found: ${serverName}`)
+            sendControlResponseError(message, `未找到服务器：${serverName}`)
           } else if (config.type !== 'sse' && config.type !== 'http') {
             sendControlResponseError(
               message,
-              `Cannot clear auth for server type "${config.type}"`,
+              `无法清除 "${config.type}" 类型服务器的授权信息`,
             )
           } else {
             await revokeServerTokens(serverName, config)
@@ -4309,13 +4309,13 @@ export function getCanUseToolFn(
         toolMatchesName(t, permissionPromptToolName),
       ) as PermissionPromptTool | undefined
       if (!permissionPromptTool) {
-        const error = `Error: MCP tool ${permissionPromptToolName} (passed via --permission-prompt-tool) not found. Available MCP tools: ${mcpTools.map(t => t.name).join(', ') || 'none'}`
+        const error = `错误：未找到通过 --permission-prompt-tool 传入的 MCP tool ${permissionPromptToolName}。可用 MCP tools：${mcpTools.map(t => t.name).join(', ') || '无'}`
         process.stderr.write(`${error}\n`)
         gracefulShutdownSync(1)
         throw new Error(error)
       }
       if (!permissionPromptTool.inputJSONSchema) {
-        const error = `Error: tool ${permissionPromptToolName} (passed via --permission-prompt-tool) must be an MCP tool`
+        const error = `错误：通过 --permission-prompt-tool 传入的工具 ${permissionPromptToolName} 必须是 MCP tool`
         process.stderr.write(`${error}\n`)
         gracefulShutdownSync(1)
         throw new Error(error)
@@ -4558,7 +4558,7 @@ async function handleRewindFiles(
   } catch (error) {
     return {
       canRewind: false,
-      error: `Failed to rewind: ${errorMessage(error)}`,
+      error: `回退失败：${errorMessage(error)}`,
     }
   }
 
@@ -4580,7 +4580,7 @@ function handleSetPermissionMode(
           subtype: 'error',
           request_id: requestId,
           error:
-            'Cannot set permission mode to bypassPermissions because it is disabled by settings or configuration',
+            '无法将权限模式设为 bypassPermissions，因为它已被设置或配置禁用',
         },
       })
       return toolPermissionContext
@@ -4592,7 +4592,7 @@ function handleSetPermissionMode(
           subtype: 'error',
           request_id: requestId,
           error:
-            'Cannot set permission mode to bypassPermissions because the session was not launched with --dangerously-skip-permissions',
+            '无法将权限模式设为 bypassPermissions，因为当前会话未使用 --dangerously-skip-permissions 启动',
         },
       })
       return toolPermissionContext
@@ -4612,8 +4612,8 @@ function handleSetPermissionMode(
         subtype: 'error',
         request_id: requestId,
         error: reason
-          ? `Cannot set permission mode to auto: ${getAutoModeUnavailableNotification(reason)}`
-          : 'Cannot set permission mode to auto',
+          ? `无法将权限模式设为 auto：${getAutoModeUnavailableNotification(reason)}`
+          : '无法将权限模式设为 auto',
       },
     })
     return toolPermissionContext
@@ -5036,9 +5036,9 @@ async function loadInitialMessages(
       )
       if (!parsedSessionId) {
         let errorMessage =
-          'Error: --resume requires a valid session ID when used with --print. Usage: claude -p --resume <session-id>'
+          '错误：与 --print 一起使用时，--resume 需要有效的会话 ID。用法：claude -p --resume <session-id>'
         if (typeof options.resume === 'string') {
-          errorMessage += `. Session IDs must be in UUID format (e.g., 550e8400-e29b-41d4-a716-446655440000). Provided value "${options.resume}" is not a valid UUID`
+          errorMessage += `。会话 ID 必须是 UUID 格式（例如 550e8400-e29b-41d4-a716-446655440000）。提供的值 "${options.resume}" 不是有效 UUID`
         }
         emitLoadError(errorMessage, options.outputFormat)
         gracefulShutdownSync(1)
@@ -5179,8 +5179,8 @@ async function loadInitialMessages(
       logError(error)
       const errorMessage =
         error instanceof Error
-          ? `Failed to resume session: ${error.message}`
-          : 'Failed to resume session with --print mode'
+          ? `恢复会话失败：${error.message}`
+          : '使用 --print 模式恢复会话失败'
       emitLoadError(errorMessage, options.outputFormat)
       gracefulShutdownSync(1)
       return { messages: [] }

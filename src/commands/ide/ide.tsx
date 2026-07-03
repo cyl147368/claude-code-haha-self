@@ -128,7 +128,7 @@ function IDEScreen(t0) {
   }
   let t5;
   if ($[17] !== availableIDEs.length) {
-    t5 = availableIDEs.length === 0 && <Text dimColor={true}>{isSupportedJetBrainsTerminal() ? "No available IDEs detected. Please install the plugin and restart your IDE:\nhttps://docs.claude.com/s/claude-code-jetbrains" : "No available IDEs detected. Make sure your IDE has the Claude Code extension or plugin installed and is running."}</Text>;
+    t5 = availableIDEs.length === 0 && <Text dimColor={true}>{isSupportedJetBrainsTerminal() ? "未检测到可用 IDE。请安装插件并重启 IDE：\nhttps://docs.claude.com/s/claude-code-jetbrains" : "未检测到可用 IDE。请确认你的 IDE 已安装 Claude Code 扩展或插件，并且正在运行。"}</Text>;
     $[17] = availableIDEs.length;
     $[18] = t5;
   } else {
@@ -454,18 +454,18 @@ export async function call(onDone: (result?: string, options?: {
           code
         } = await execFileNoThrow('code', [targetPath]);
         if (code === 0) {
-          onDone(`Opened ${worktreeSession ? 'worktree' : 'project'} in ${chalk.bold(selectedIDE.name)}`);
+          onDone(`已在 ${chalk.bold(selectedIDE.name)} 中打开 ${worktreeSession ? 'worktree' : 'project'}`);
         } else {
-          onDone(`Failed to open in ${selectedIDE.name}. Try opening manually: ${targetPath}`);
+          onDone(`无法在 ${selectedIDE.name} 中打开。请尝试手动打开：${targetPath}`);
         }
       } else if (isSupportedJetBrainsTerminal()) {
         // JetBrains IDEs - they usually open via their CLI tools
-        onDone(`Please open the ${worktreeSession ? 'worktree' : 'project'} manually in ${chalk.bold(selectedIDE.name)}: ${targetPath}`);
+        onDone(`请在 ${chalk.bold(selectedIDE.name)} 中手动打开 ${worktreeSession ? 'worktree' : 'project'}：${targetPath}`);
       } else {
-        onDone(`Please open the ${worktreeSession ? 'worktree' : 'project'} manually in ${chalk.bold(selectedIDE.name)}: ${targetPath}`);
+        onDone(`请在 ${chalk.bold(selectedIDE.name)} 中手动打开 ${worktreeSession ? 'worktree' : 'project'}：${targetPath}`);
       }
     }} onDone={() => {
-      onDone('Exited without opening IDE', {
+      onDone('已退出，未打开 IDE', {
         display: 'system'
       });
     }} />;
@@ -480,9 +480,9 @@ export async function call(onDone: (result?: string, options?: {
         context.onInstallIDEExtension(ide);
         // The completion message will be shown after installation
         if (isJetBrainsIde(ide)) {
-          onDone(`Installed plugin to ${chalk.bold(toIDEDisplayName(ide))}\n` + `Please ${chalk.bold('restart your IDE')} completely for it to take effect`);
+          onDone(`已将插件安装到 ${chalk.bold(toIDEDisplayName(ide))}\n` + `请完全${chalk.bold('重启你的 IDE')}以使其生效`);
         } else {
-          onDone(`Installed extension to ${chalk.bold(toIDEDisplayName(ide))}`);
+          onDone(`已将扩展安装到 ${chalk.bold(toIDEDisplayName(ide))}`);
         }
       }
     };
@@ -539,16 +539,16 @@ function IDECommandFlow({
     }
     if (!ideClient || ideClient.type === 'pending') return;
     if (ideClient.type === 'connected') {
-      onDone(`Connected to ${connectingIDE.name}.`);
+      onDone(`已连接到 ${connectingIDE.name}。`);
     } else if (ideClient.type === 'failed') {
-      onDone(`Failed to connect to ${connectingIDE.name}.`);
+      onDone(`连接 ${connectingIDE.name} 失败。`);
     }
   }, [ideClient, connectingIDE, onDone]);
 
   // Timeout fallback
   useEffect(() => {
     if (!connectingIDE) return;
-    const timer = setTimeout(onDone, IDE_CONNECTION_TIMEOUT_MS, `Connection to ${connectingIDE.name} timed out.`);
+    const timer = setTimeout(onDone, IDE_CONNECTION_TIMEOUT_MS, `连接 ${connectingIDE.name} 超时。`);
     return () => clearTimeout(timer);
   }, [connectingIDE, onDone]);
   const handleSelectIDE = useCallback((selectedIDE?: DetectedIDEInfo) => {

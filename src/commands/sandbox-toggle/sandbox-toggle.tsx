@@ -52,7 +52,7 @@ export async function call(onDone: (result?: string) => void, _context: unknown,
       // Handle exclude subcommand
       const commandPattern = trimmedArgs.slice('exclude '.length).trim();
       if (!commandPattern) {
-        const message = color('error', themeName)('Error: Please provide a command pattern to exclude (e.g., /sandbox exclude "npm run test:*")');
+        const message = color('error', themeName)('错误：请提供要排除的命令模式（例如 /sandbox exclude "npm run test:*"）');
         onDone(message);
         return null;
       }

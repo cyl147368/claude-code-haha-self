@@ -67,69 +67,69 @@ export const CRON_LIST_TOOL_NAME = 'CronList'
 
 export function buildCronCreateDescription(durableEnabled: boolean): string {
   return durableEnabled
-    ? 'Schedule a prompt to run at a future time — either recurring on a cron schedule, or once at a specific time. Pass durable: true to persist to .claude/scheduled_tasks.json; otherwise session-only.'
-    : 'Schedule a prompt to run at a future time within this Claude session — either recurring on a cron schedule, or once at a specific time.'
+    ? '安排一个 prompt 在未来时间运行，可以按 cron 周期重复，也可以在特定时间运行一次。传 durable: true 可持久化到 .claude/scheduled_tasks.json；否则仅限当前会话。'
+    : '在当前 Claude 会话中安排一个 prompt 在未来时间运行，可以按 cron 周期重复，也可以在特定时间运行一次。'
 }
 
 export function buildCronCreatePrompt(durableEnabled: boolean): string {
   const durabilitySection = durableEnabled
-    ? `## Durability
+    ? `## 持久性
 
-By default (durable: false) the job lives only in this Claude session — nothing is written to disk, and the job is gone when Claude exits. Pass durable: true to write to .claude/scheduled_tasks.json so the job survives restarts. Only use durable: true when the user explicitly asks for the task to persist ("keep doing this every day", "set this up permanently"). Most "remind me in 5 minutes" / "check back in an hour" requests should stay session-only.`
-    : `## Session-only
+默认情况下（durable: false），job 只存在于当前 Claude 会话中；不会写入磁盘，Claude 退出后 job 消失。传 durable: true 会写入 .claude/scheduled_tasks.json，使 job 在重启后仍保留。只有当用户明确要求任务持久存在（"keep doing this every day"、"set this up permanently"）时才使用 durable: true。大多数 "remind me in 5 minutes" / "check back in an hour" 请求都应保持仅当前会话。`
+    : `## 仅当前会话
 
-Jobs live only in this Claude session — nothing is written to disk, and the job is gone when Claude exits.`
+Jobs 只存在于当前 Claude 会话中；不会写入磁盘，Claude 退出后 job 消失。`
 
   const durableRuntimeNote = durableEnabled
-    ? 'Durable jobs persist to .claude/scheduled_tasks.json and survive session restarts — on next launch they resume automatically. One-shot durable tasks that were missed while the REPL was closed are surfaced for catch-up. Session-only jobs die with the process. '
+    ? 'Durable jobs 会持久化到 .claude/scheduled_tasks.json，并在会话重启后继续存在；下次启动时会自动恢复。REPL 关闭期间错过的一次性 durable tasks 会浮现出来供补做。仅当前会话 jobs 会随进程结束而消失。'
     : ''
 
-  return `Schedule a prompt to be enqueued at a future time. Use for both recurring schedules and one-shot reminders.
+  return `安排一个 prompt 在未来时间入队。可用于周期性 schedule 和一次性提醒。
 
-Uses standard 5-field cron in the user's local timezone: minute hour day-of-month month day-of-week. "0 9 * * *" means 9am local — no timezone conversion needed.
+使用用户本地 timezone 的标准 5 字段 cron：minute hour day-of-month month day-of-week。"0 9 * * *" 表示本地上午 9 点，不需要 timezone 转换。
 
-## One-shot tasks (recurring: false)
+## 一次性任务（recurring: false）
 
-For "remind me at X" or "at <time>, do Y" requests — fire once then auto-delete.
-Pin minute/hour/day-of-month/month to specific values:
+用于 "remind me at X" 或 "at <time>, do Y" 请求：触发一次后自动删除。
+将 minute/hour/day-of-month/month 固定为具体值：
   "remind me at 2:30pm today to check the deploy" → cron: "30 14 <today_dom> <today_month> *", recurring: false
   "tomorrow morning, run the smoke test" → cron: "57 8 <tomorrow_dom> <tomorrow_month> *", recurring: false
 
-## Recurring jobs (recurring: true, the default)
+## 周期性 jobs（recurring: true，默认）
 
-For "every N minutes" / "every hour" / "weekdays at 9am" requests:
+用于 "every N minutes" / "every hour" / "weekdays at 9am" 请求：
   "*/5 * * * *" (every 5 min), "0 * * * *" (hourly), "0 9 * * 1-5" (weekdays at 9am local)
 
-## Avoid the :00 and :30 minute marks when the task allows it
+## 任务允许时，避开 :00 和 :30 分钟点
 
-Every user who asks for "9am" gets \`0 9\`, and every user who asks for "hourly" gets \`0 *\` — which means requests from across the planet land on the API at the same instant. When the user's request is approximate, pick a minute that is NOT 0 or 30:
+每个要求 "9am" 的用户都会得到 \`0 9\`，每个要求 "hourly" 的用户都会得到 \`0 *\`，这意味着全球请求会在同一瞬间打到 API。当用户请求是近似时间时，选择不是 0 或 30 的分钟：
   "every morning around 9" → "57 8 * * *" or "3 9 * * *" (not "0 9 * * *")
   "hourly" → "7 * * * *" (not "0 * * * *")
   "in an hour or so, remind me to..." → pick whatever minute you land on, don't round
 
-Only use minute 0 or 30 when the user names that exact time and clearly means it ("at 9:00 sharp", "at half past", coordinating with a meeting). When in doubt, nudge a few minutes early or late — the user will not notice, and the fleet will.
+只有当用户明确给出精确时间并显然就是这个意思时，才使用 0 或 30 分钟（例如 "at 9:00 sharp"、"at half past"、与会议对齐）。拿不准时，提前或延后几分钟；用户不会注意到，但系统整体会受益。
 
 ${durabilitySection}
 
-## Runtime behavior
+## 运行时行为
 
-Jobs only fire while the REPL is idle (not mid-query). ${durableRuntimeNote}The scheduler adds a small deterministic jitter on top of whatever you pick: recurring tasks fire up to 10% of their period late (max 15 min); one-shot tasks landing on :00 or :30 fire up to 90 s early. Picking an off-minute is still the bigger lever.
+Jobs 只会在 REPL 空闲时触发（不会在 query 中途触发）。${durableRuntimeNote} scheduler 会在你选择的时间上添加小的确定性 jitter：周期任务最多延迟其周期的 10%（最多 15 分钟）触发；落在 :00 或 :30 的一次性任务最多提前 90 秒触发。选择非整点/半点分钟仍然是更重要的杠杆。
 
-Recurring tasks auto-expire after ${DEFAULT_MAX_AGE_DAYS} days — they fire one final time, then are deleted. This bounds session lifetime. Tell the user about the ${DEFAULT_MAX_AGE_DAYS}-day limit when scheduling recurring jobs.
+周期性任务会在 ${DEFAULT_MAX_AGE_DAYS} 天后自动过期：最后触发一次，然后被删除。这限制了会话生命周期。安排周期性 jobs 时，请告知用户 ${DEFAULT_MAX_AGE_DAYS} 天限制。
 
-Returns a job ID you can pass to ${CRON_DELETE_TOOL_NAME}.`
+返回一个 job ID，可传给 ${CRON_DELETE_TOOL_NAME}。`
 }
 
-export const CRON_DELETE_DESCRIPTION = 'Cancel a scheduled cron job by ID'
+export const CRON_DELETE_DESCRIPTION = '按 ID 取消已计划的 cron job'
 export function buildCronDeletePrompt(durableEnabled: boolean): string {
   return durableEnabled
-    ? `Cancel a cron job previously scheduled with ${CRON_CREATE_TOOL_NAME}. Removes it from .claude/scheduled_tasks.json (durable jobs) or the in-memory session store (session-only jobs).`
-    : `Cancel a cron job previously scheduled with ${CRON_CREATE_TOOL_NAME}. Removes it from the in-memory session store.`
+    ? `取消之前用 ${CRON_CREATE_TOOL_NAME} 安排的 cron job。将它从 .claude/scheduled_tasks.json（durable jobs）或内存会话存储（session-only jobs）中移除。`
+    : `取消之前用 ${CRON_CREATE_TOOL_NAME} 安排的 cron job。将它从内存会话存储中移除。`
 }
 
-export const CRON_LIST_DESCRIPTION = 'List scheduled cron jobs'
+export const CRON_LIST_DESCRIPTION = '列出已计划的 cron jobs'
 export function buildCronListPrompt(durableEnabled: boolean): string {
   return durableEnabled
-    ? `List all cron jobs scheduled via ${CRON_CREATE_TOOL_NAME}, both durable (.claude/scheduled_tasks.json) and session-only.`
-    : `List all cron jobs scheduled via ${CRON_CREATE_TOOL_NAME} in this session.`
+    ? `列出通过 ${CRON_CREATE_TOOL_NAME} 安排的所有 cron jobs，包括 durable（.claude/scheduled_tasks.json）和 session-only。`
+    : `列出当前会话中通过 ${CRON_CREATE_TOOL_NAME} 安排的所有 cron jobs。`
 }

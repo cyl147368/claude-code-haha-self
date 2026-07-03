@@ -171,27 +171,27 @@ export function formatCommandsWithinBudget(
 }
 
 export const getPrompt = memoize(async (_cwd: string): Promise<string> => {
-  return `Execute a skill within the main conversation
+  return `在主对话中执行一个 skill
 
-When users ask you to perform tasks, check if any of the available skills match. Skills provide specialized capabilities and domain knowledge.
+当用户要求你执行任务时，检查可用 skills 中是否有匹配项。Skills 提供专门能力和领域知识。
 
-When users reference a "slash command" or "/<something>" (e.g., "/commit", "/review-pr"), they are referring to a skill. Use this tool to invoke it.
+当用户提到 "slash command" 或 "/<something>"（例如 "/commit"、"/review-pr"）时，他们指的是 skill。请使用此工具调用它。
 
-How to invoke:
-- Use this tool with the skill name and optional arguments
-- Examples:
-  - \`skill: "pdf"\` - invoke the pdf skill
-  - \`skill: "commit", args: "-m 'Fix bug'"\` - invoke with arguments
-  - \`skill: "review-pr", args: "123"\` - invoke with arguments
-  - \`skill: "ms-office-suite:pdf"\` - invoke using fully qualified name
+如何调用：
+- 使用此工具，并提供 skill name 和可选 arguments
+- 示例：
+  - \`skill: "pdf"\`：调用 pdf skill
+  - \`skill: "commit", args: "-m 'Fix bug'"\`：带 arguments 调用
+  - \`skill: "review-pr", args: "123"\`：带 arguments 调用
+  - \`skill: "ms-office-suite:pdf"\`：使用 fully qualified name 调用
 
-Important:
-- Available skills are listed in system-reminder messages in the conversation
-- When a skill matches the user's request, this is a BLOCKING REQUIREMENT: invoke the relevant Skill tool BEFORE generating any other response about the task
-- NEVER mention a skill without actually calling this tool
-- Do not invoke a skill that is already running
-- Do not use this tool for built-in CLI commands (like /help, /clear, etc.)
-- If you see a <${COMMAND_NAME_TAG}> tag in the current conversation turn, the skill has ALREADY been loaded - follow the instructions directly instead of calling this tool again
+重要：
+- 可用 skills 会列在对话中的 system-reminder 消息中
+- 当某个 skill 与用户请求匹配时，这是阻塞性要求：在生成任何关于该任务的其他回复前，先调用相关 Skill 工具
+- 绝不要只提到某个 skill 却不实际调用此工具
+- 不要调用已经在运行的 skill
+- 不要把此工具用于内置 CLI 命令（例如 /help、/clear 等）
+- 如果你在当前对话轮次中看到 <${COMMAND_NAME_TAG}> 标签，说明该 skill 已经加载。请直接遵循其中说明，不要再次调用此工具
 `
 })
 

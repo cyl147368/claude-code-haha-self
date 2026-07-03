@@ -198,6 +198,144 @@ export type QueryParams = {
   deps?: QueryDeps
 }
 
+function stringifyForChineseDisplay(value: unknown): string {
+  if (typeof value === 'string') return value
+  if (value === undefined) return '未提供'
+  try {
+    return JSON.stringify(value, null, 2) ?? String(value)
+  } catch {
+    return String(value)
+  }
+}
+
+function isDisplayRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+}
+
+function formatContentForChineseDisplay(content: unknown): string {
+  if (typeof content === 'string') return content
+  if (!Array.isArray(content)) return stringifyForChineseDisplay(content)
+
+  return content
+    .map((block, index) => {
+      if (!isDisplayRecord(block)) {
+        return `${index + 1}. 内容块：\n${stringifyForChineseDisplay(block)}`
+      }
+
+      switch (block.type) {
+        case 'text':
+          return `${index + 1}. 文本：\n${stringifyForChineseDisplay(block.text)}`
+        case 'tool_use':
+          return [
+            `${index + 1}. 工具调用：${stringifyForChineseDisplay(block.name)}`,
+            `调用 ID：${stringifyForChineseDisplay(block.id)}`,
+            `输入：\n${stringifyForChineseDisplay(block.input)}`,
+          ].join('\n')
+        case 'tool_result':
+          return [
+            `${index + 1}. 工具返回：${stringifyForChineseDisplay(block.tool_use_id)}`,
+            `是否错误：${stringifyForChineseDisplay(block.is_error ?? false)}`,
+            `内容：\n${stringifyForChineseDisplay(block.content)}`,
+          ].join('\n')
+        case 'thinking':
+          return `${index + 1}. 思考内容：\n${stringifyForChineseDisplay(block.thinking)}`
+        case 'image':
+          return `${index + 1}. 图片内容：\n${stringifyForChineseDisplay(block)}`
+        case 'document':
+          return `${index + 1}. 文档内容：\n${stringifyForChineseDisplay(block)}`
+        default:
+          return `${index + 1}. ${stringifyForChineseDisplay(block.type)} 内容块：\n${stringifyForChineseDisplay(block)}`
+      }
+    })
+    .join('\n\n')
+}
+
+function formatMessageForChineseDisplay(
+  message: Message,
+  index: number,
+): string {
+  if (message.type === 'user' || message.type === 'assistant') {
+    const role = message.type === 'user' ? '用户' : '助手'
+    return [
+      `消息 ${index + 1}（${role}）`,
+      formatContentForChineseDisplay(message.message.content),
+    ].join('\n')
+  }
+
+  return [
+    `消息 ${index + 1}（${message.type}）`,
+    stringifyForChineseDisplay(message),
+  ].join('\n')
+}
+
+function isApiDisplayMessage(message: Message): boolean {
+  if (message.type !== 'system') return false
+  const content = 'content' in message ? message.content : undefined
+  return (
+    typeof content === 'string' &&
+    (content.startsWith('[请求调用]') || content.startsWith('[请求返回]'))
+  )
+}
+
+function formatApiRequestForChineseDisplay({
+  model,
+  querySource,
+  systemPrompt,
+  messages,
+  thinkingConfig,
+  tools,
+}: {
+  model: string
+  querySource: QuerySource
+  systemPrompt: SystemPrompt
+  messages: Message[]
+  thinkingConfig: ThinkingConfig
+  tools: ToolUseContext['options']['tools']
+}): string {
+  const toolNames = tools.map(tool => tool.name).join(', ') || '无'
+  const displayMessages = messages.filter(message => !isApiDisplayMessage(message))
+  return [
+    '[请求调用]',
+    `模型：${model}`,
+    `来源：${querySource}`,
+    `工具：${toolNames}`,
+    `思考配置：${stringifyForChineseDisplay(thinkingConfig)}`,
+    '',
+    '系统提示词：',
+    systemPrompt
+      .map((prompt, index) => `系统提示 ${index + 1}：\n${prompt}`)
+      .join('\n\n'),
+    '',
+    '消息内容：',
+    displayMessages.map(formatMessageForChineseDisplay).join('\n\n'),
+  ].join('\n')
+}
+
+function formatApiResponseForChineseDisplay({
+  model,
+  assistantMessages,
+}: {
+  model: string
+  assistantMessages: AssistantMessage[]
+}): string {
+  return [
+    '[请求返回]',
+    `模型：${model}`,
+    `返回消息数：${assistantMessages.length}`,
+    '',
+    assistantMessages.length === 0
+      ? '返回内容：无'
+      : assistantMessages
+          .map((message, index) =>
+            [
+              `返回 ${index + 1}：`,
+              formatContentForChineseDisplay(message.message.content),
+            ].join('\n'),
+          )
+          .join('\n\n'),
+  ].join('\n')
+}
+
 // -- query loop state
 
 // Mutable state carried between loop iterations
@@ -656,8 +794,23 @@ async function* queryLoop(
         try {
           let streamingFallbackOccured = false
           queryCheckpoint('query_api_streaming_start')
+          const requestMessages = prependUserContext(
+            messagesForQuery,
+            userContext,
+          ).filter(message => !isApiDisplayMessage(message))
+          yield createSystemMessage(
+            formatApiRequestForChineseDisplay({
+              model: currentModel,
+              querySource,
+              systemPrompt: fullSystemPrompt,
+              messages: requestMessages,
+              thinkingConfig: toolUseContext.options.thinkingConfig,
+              tools: toolUseContext.options.tools,
+            }),
+            'warning',
+          )
           for await (const message of deps.callModel({
-            messages: prependUserContext(messagesForQuery, userContext),
+            messages: requestMessages,
             systemPrompt: fullSystemPrompt,
             thinkingConfig: toolUseContext.options.thinkingConfig,
             tools: toolUseContext.options.tools,
@@ -862,6 +1015,13 @@ async function* queryLoop(
             }
           }
           queryCheckpoint('query_api_streaming_end')
+          yield createSystemMessage(
+            formatApiResponseForChineseDisplay({
+              model: currentModel,
+              assistantMessages,
+            }),
+            'warning',
+          )
 
           // Yield deferred microcompact boundary message using actual API-reported
           // token deletion count instead of client-side estimates.

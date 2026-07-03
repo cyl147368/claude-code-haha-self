@@ -27,14 +27,14 @@ async function checkMcpServerHealth(name: string, server: ScopedMcpServerConfig)
   try {
     const result = await connectToServer(name, server);
     if (result.type === 'connected') {
-      return '✓ Connected';
+      return '✓ 已连接';
     } else if (result.type === 'needs-auth') {
-      return '! Needs authentication';
+      return '! 需要认证';
     } else {
-      return '✗ Failed to connect';
+      return '✗ 连接失败';
     }
   } catch (_error) {
-    return '✗ Connection error';
+    return '✗ 连接错误';
   }
 }
 
@@ -52,7 +52,7 @@ export async function mcpServeHandler({
     await stat(providedCwd);
   } catch (error) {
     if (isFsInaccessible(error)) {
-      cliError(`Error: Directory ${providedCwd} does not exist`);
+      cliError(`错误：目录 ${providedCwd} 不存在`);
     }
     throw error;
   }
@@ -66,7 +66,7 @@ export async function mcpServeHandler({
     } = await import('../../entrypoints/mcp.js');
     await startMCPServer(providedCwd, debug ?? false, verbose ?? false);
   } catch (error) {
-    cliError(`Error: Failed to start MCP server: ${error}`);
+    cliError(`错误：启动 MCP server 失败：${error}`);
   }
 }
 
@@ -91,8 +91,8 @@ export async function mcpRemoveHandler(name: string, options: {
       });
       await removeMcpConfig(name, scope);
       cleanupSecureStorage();
-      process.stdout.write(`Removed MCP server ${name} from ${scope} config\n`);
-      cliOk(`File modified: ${describeMcpConfigFilePath(scope)}`);
+      process.stdout.write(`已从 ${scope} 配置中移除 MCP server ${name}\n`);
+      cliOk(`文件已修改：${describeMcpConfigFilePath(scope)}`);
     }
 
     // If no scope specified, check where the server exists

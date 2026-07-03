@@ -9,9 +9,8 @@ type Options = {
   pluginName: string
   pluginCommand: string
   /**
-   * The prompt to use while the marketplace is private.
-   * External users will get this prompt. Once the marketplace is public,
-   * this parameter and the fallback logic can be removed.
+   * marketplace 仍为 private 时使用的 prompt。
+   * 外部用户会拿到这个 prompt；marketplace 公开后可移除该参数和 fallback 逻辑。
    */
   getPromptWhileMarketplaceIsPrivate: (
     args: string,
@@ -45,16 +44,16 @@ export function createMovedToPluginCommand({
         return [
           {
             type: 'text',
-            text: `This command has been moved to a plugin. Tell the user:
+            text: `这个命令已经迁移到插件。请告诉用户：
 
-1. To install the plugin, run:
+1. 要安装插件，请运行：
    claude plugin install ${pluginName}@claude-code-marketplace
 
-2. After installation, use /${pluginName}:${pluginCommand} to run this command
+2. 安装后，使用 /${pluginName}:${pluginCommand} 运行该命令
 
-3. For more information, see: https://github.com/anthropics/claude-code-marketplace/blob/main/${pluginName}/README.md
+3. 更多信息见：https://github.com/anthropics/claude-code-marketplace/blob/main/${pluginName}/README.md
 
-Do not attempt to run the command. Simply inform the user about the plugin installation.`,
+不要尝试运行该命令。只需告知用户如何安装插件。`,
           },
         ]
       }

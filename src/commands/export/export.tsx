@@ -64,10 +64,10 @@ export async function call(onDone: LocalJSXCommandOnDone, context: ToolUseContex
         encoding: 'utf-8',
         flush: true
       });
-      onDone(`Conversation exported to: ${filepath}`);
+      onDone(`会话已导出到：${filepath}`);
       return null;
     } catch (error) {
-      onDone(`Failed to export conversation: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      onDone(`导出会话失败：${error instanceof Error ? error.message : '未知错误'}`);
       return null;
     }
   }

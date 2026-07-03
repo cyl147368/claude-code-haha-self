@@ -62,13 +62,13 @@ async function checkLoginState(): Promise<CheckResult> {
 function errorMessage(err: ImportTokenError, codeUrl: string): string {
   switch (err.kind) {
     case 'not_signed_in':
-      return `Login failed. Please visit ${codeUrl} and login using the GitHub App`;
+      return `登录失败。请访问 ${codeUrl} 并使用 GitHub App 登录`;
     case 'invalid_token':
-      return 'GitHub rejected that token. Run `gh auth login` and try again.';
+      return 'GitHub 拒绝了该 token。请运行 `gh auth login` 后重试。';
     case 'server':
-      return `Server error (${err.status}). Try again in a moment.`;
+      return `服务器错误（${err.status}）。请稍后重试。`;
     case 'network':
-      return "Couldn't reach the server. Check your connection.";
+      return '无法连接服务器。请检查网络连接。';
   }
 }
 type Step = {
@@ -147,13 +147,13 @@ function Web({
     logEvent('tengu_remote_setup_result', {
       result: 'success' as SafeString
     });
-    onDone(`Connected as ${result.result.github_username}. Opened ${url}`);
+    onDone(`已作为 ${result.result.github_username} 连接。已打开 ${url}`);
   };
   if (step.name === 'checking') {
-    return <LoadingState message="Checking login status…" />;
+    return <LoadingState message="正在检查登录状态..." />;
   }
   if (step.name === 'uploading') {
-    return <LoadingState message="Connecting GitHub to Claude…" />;
+    return <LoadingState message="正在将 GitHub 连接到 Claude..." />;
   }
   const token = step.token;
   return <Dialog title="Connect Claude on the web to GitHub?" onCancel={handleCancel} hideInputGuide>

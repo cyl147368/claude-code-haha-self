@@ -166,14 +166,16 @@ export async function toolToAPISchema(
       input_schema = filterSwarmFieldsFromSchema(tool.name, input_schema)
     }
 
+    const description = await tool.prompt({
+      getToolPermissionContext: options.getToolPermissionContext,
+      tools: options.tools,
+      agents: options.agents,
+      allowedAgentTypes: options.allowedAgentTypes,
+    })
+
     base = {
       name: tool.name,
-      description: await tool.prompt({
-        getToolPermissionContext: options.getToolPermissionContext,
-        tools: options.tools,
-        agents: options.agents,
-        allowedAgentTypes: options.allowedAgentTypes,
-      }),
+      description: `请使用中文理解和执行这个工具说明；所有面向用户的解释、进度和结果说明都必须使用中文。工具名、参数名、代码标识符和文件路径保持原样。\n\n${description}`,
       input_schema,
     }
 

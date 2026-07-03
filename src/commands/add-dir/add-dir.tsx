@@ -96,14 +96,14 @@ export async function call(onDone: LocalJSXCommandOnDone, context: LocalJSXComma
     if (remember) {
       try {
         persistPermissionUpdate(permissionUpdate);
-        message = `Added ${chalk.bold(path)} as a working directory and saved to local settings`;
+        message = `已将 ${chalk.bold(path)} 添加为工作目录，并保存到本地设置`;
       } catch (error) {
-        message = `Added ${chalk.bold(path)} as a working directory. Failed to save to local settings: ${error instanceof Error ? error.message : 'Unknown error'}`;
+        message = `已将 ${chalk.bold(path)} 添加为工作目录。保存到本地设置失败：${error instanceof Error ? error.message : '未知错误'}`;
       }
     } else {
-      message = `Added ${chalk.bold(path)} as a working directory for this session`;
+      message = `已将 ${chalk.bold(path)} 添加为本会话的工作目录`;
     }
-    const messageWithHint = `${message} ${chalk.dim('· /permissions to manage')}`;
+    const messageWithHint = `${message} ${chalk.dim('· 可用 /permissions 管理')}`;
     onDone(messageWithHint);
   };
 

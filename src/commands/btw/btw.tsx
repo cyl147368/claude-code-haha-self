@@ -97,13 +97,13 @@ function BtwSideQuestion(t0) {
             if (result.response) {
               setResponse(result.response);
             } else {
-              setError("No response received");
+              setError("未收到响应");
             }
           }
         } catch (t5) {
           const err = t5;
           if (!abortController.signal.aborted) {
-            setError(errorMessage(err) || "Failed to get response");
+            setError(errorMessage(err) || "获取响应失败");
           }
         }
       };

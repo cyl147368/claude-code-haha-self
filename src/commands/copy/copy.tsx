@@ -87,9 +87,9 @@ async function copyOrWriteToFile(text: string, filename: string): Promise<string
   // terminal support), so the file provides a reliable fallback.
   try {
     const filePath = await writeToFile(text, filename);
-    return `Copied to clipboard (${charCount} characters, ${lineCount} lines)\nAlso written to ${filePath}`;
+    return `已复制到剪贴板（${charCount} 个字符，${lineCount} 行）\n同时已写入 ${filePath}`;
   } catch {
-    return `Copied to clipboard (${charCount} characters, ${lineCount} lines)`;
+    return `已复制到剪贴板（${charCount} 个字符，${lineCount} 行）`;
   }
 }
 function truncateLine(text: string, maxLen: number): string {
@@ -126,11 +126,11 @@ function CopyPicker(t0) {
     onDone
   } = t0;
   const focusedRef = useRef("full");
-  const t1 = `${fullText.length} chars, ${countCharInString(fullText, "\n") + 1} lines`;
+  const t1 = `${fullText.length} 个字符，${countCharInString(fullText, "\n") + 1} 行`;
   let t2;
   if ($[0] !== t1) {
     t2 = {
-      label: "Full response",
+      label: "完整回复",
       value: "full" as const,
       description: t1
     };
@@ -144,9 +144,9 @@ function CopyPicker(t0) {
     let t4;
     if ($[5] === Symbol.for("react.memo_cache_sentinel")) {
       t4 = {
-        label: "Always copy full response",
+        label: "始终复制完整回复",
         value: "always" as const,
-        description: "Skip this picker in the future (revert via /config)"
+        description: "以后跳过此选择器（可通过 /config 恢复）"
       };
       $[5] = t4;
     } else {
@@ -233,7 +233,7 @@ function CopyPicker(t0) {
         onDone(`Written to ${filePath}`);
       } catch (t7) {
         const e = t7;
-        onDone(`Failed to write file: ${e instanceof Error ? e.message : e}`);
+        onDone(`写入文件失败：${e instanceof Error ? e.message : e}`);
       }
     };
     t6 = function handleKeyDown(e_0) {
@@ -280,7 +280,7 @@ function CopyPicker(t0) {
   let t10;
   if ($[23] !== onDone) {
     t10 = () => {
-      onDone("Copy cancelled", {
+      onDone("已取消复制", {
         display: "system"
       });
     };
@@ -328,7 +328,7 @@ function _temp(block, index) {
   return {
     label: truncateLine(block.code, 60),
     value: index,
-    description: [block.lang, blockLines > 1 ? `${blockLines} lines` : undefined].filter(Boolean).join(", ") || undefined
+    description: [block.lang, blockLines > 1 ? `${blockLines} 行` : undefined].filter(Boolean).join(", ") || undefined
   };
 }
 export const call: LocalJSXCommandCall = async (onDone, context, args) => {
@@ -344,7 +344,7 @@ export const call: LocalJSXCommandCall = async (onDone, context, args) => {
   if (arg) {
     const n = Number(arg);
     if (!Number.isInteger(n) || n < 1) {
-      onDone(`Usage: /copy [N] where N is 1 (latest), 2, 3, \u2026 Got: ${arg}`);
+      onDone(`用法：/copy [N]，其中 N 为 1（最新）、2、3、…… 当前输入：${arg}`);
       return null;
     }
     if (n > texts.length) {

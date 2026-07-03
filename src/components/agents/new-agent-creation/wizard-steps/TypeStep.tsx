@@ -59,14 +59,14 @@ export function TypeStep(_props) {
   const handleSubmit = t1;
   let t2;
   if ($[4] === Symbol.for("react.memo_cache_sentinel")) {
-    t2 = <Byline><KeyboardShortcutHint shortcut="Type" action="enter text" /><KeyboardShortcutHint shortcut="Enter" action="continue" /><ConfigurableShortcutHint action="confirm:no" context="Settings" fallback="Esc" description="go back" /></Byline>;
+    t2 = <Byline><KeyboardShortcutHint shortcut="输入" action="输入文本" /><KeyboardShortcutHint shortcut="Enter" action="继续" /><ConfigurableShortcutHint action="confirm:no" context="Settings" fallback="Esc" description="返回" /></Byline>;
     $[4] = t2;
   } else {
     t2 = $[4];
   }
   let t3;
   if ($[5] === Symbol.for("react.memo_cache_sentinel")) {
-    t3 = <Text>Enter a unique identifier for your agent:</Text>;
+    t3 = <Text>输入这个 agent 的唯一标识符：</Text>;
     $[5] = t3;
   } else {
     t3 = $[5];
@@ -91,7 +91,7 @@ export function TypeStep(_props) {
   }
   let t6;
   if ($[12] !== t4 || $[13] !== t5) {
-    t6 = <WizardDialogLayout subtitle="Agent type (identifier)" footerText={t2}><Box flexDirection="column">{t3}{t4}{t5}</Box></WizardDialogLayout>;
+    t6 = <WizardDialogLayout subtitle="Agent 类型（标识符）" footerText={t2}><Box flexDirection="column">{t3}{t4}{t5}</Box></WizardDialogLayout>;
     $[12] = t4;
     $[13] = t5;
     $[14] = t6;

@@ -45,12 +45,12 @@ export function AddMarketplace({
   const handleAdd = async () => {
     const input = inputValue.trim();
     if (!input) {
-      setError('Please enter a marketplace source');
+      setError('请输入 marketplace 来源');
       return;
     }
     const parsed = await parseMarketplaceInput(input);
     if (!parsed) {
-      setError('Invalid marketplace source format. Try: owner/repo, https://..., or ./path');
+      setError('marketplace 来源格式无效。可尝试：owner/repo、https://... 或 ./path');
       return;
     }
 

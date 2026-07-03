@@ -118,9 +118,9 @@ export function ConfirmStep(t0) {
     }
     const memoryDisplayElement = t22;
     T1 = WizardDialogLayout;
-    t18 = "Confirm and save";
+    t18 = "确认并保存";
     if ($[34] === Symbol.for("react.memo_cache_sentinel")) {
-      t19 = <Byline><KeyboardShortcutHint shortcut="s/Enter" action="save" /><KeyboardShortcutHint shortcut="e" action="edit in your editor" /><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="cancel" /></Byline>;
+      t19 = <Byline><KeyboardShortcutHint shortcut="s/Enter" action="保存" /><KeyboardShortcutHint shortcut="e" action="在编辑器中编辑" /><ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="取消" /></Byline>;
       $[34] = t19;
     } else {
       t19 = $[34];
@@ -172,7 +172,7 @@ export function ConfirmStep(t0) {
     }
     let t26;
     if ($[44] === Symbol.for("react.memo_cache_sentinel")) {
-      t26 = <Text bold={true}>Tools</Text>;
+      t26 = <Text bold={true}>工具</Text>;
       $[44] = t26;
     } else {
       t26 = $[44];
@@ -194,7 +194,7 @@ export function ConfirmStep(t0) {
     }
     let t28;
     if ($[49] === Symbol.for("react.memo_cache_sentinel")) {
-      t28 = <Text bold={true}>Model</Text>;
+      t28 = <Text bold={true}>模型</Text>;
       $[49] = t28;
     } else {
       t28 = $[49];
@@ -216,7 +216,7 @@ export function ConfirmStep(t0) {
     }
     t11 = memoryDisplayElement;
     if ($[54] === Symbol.for("react.memo_cache_sentinel")) {
-      t12 = <Box marginTop={1}><Text><Text bold={true}>Description</Text> (tells Claude when to use this agent):</Text></Box>;
+      t12 = <Box marginTop={1}><Text><Text bold={true}>描述</Text>（告诉 Claude 何时使用此 agent）：</Text></Box>;
       $[54] = t12;
     } else {
       t12 = $[54];
@@ -229,7 +229,7 @@ export function ConfirmStep(t0) {
       t13 = $[56];
     }
     if ($[57] === Symbol.for("react.memo_cache_sentinel")) {
-      t14 = <Box marginTop={1}><Text><Text bold={true}>System prompt</Text>:</Text></Box>;
+      t14 = <Box marginTop={1}><Text><Text bold={true}>系统提示词</Text>：</Text></Box>;
       $[57] = t14;
     } else {
       t14 = $[57];
@@ -312,7 +312,7 @@ export function ConfirmStep(t0) {
   }
   let t23;
   if ($[64] === Symbol.for("react.memo_cache_sentinel")) {
-    t23 = <Box marginTop={2}><Text color="success">Press {t21} or {t22} to save,{" "}<Text bold={true}>e</Text> to save and edit</Text></Box>;
+    t23 = <Box marginTop={2}><Text color="success">按 {t21} 或 {t22} 保存，按{" "}<Text bold={true}>e</Text> 保存并编辑</Text></Box>;
     $[64] = t23;
   } else {
     t23 = $[64];
@@ -362,10 +362,10 @@ function _temp2(warning, i) {
 }
 function _temp(toolNames) {
   if (toolNames === undefined) {
-    return "All tools";
+    return "所有工具";
   }
   if (toolNames.length === 0) {
-    return "None";
+    return "无";
   }
   if (toolNames.length === 1) {
     return toolNames[0] || "None";

@@ -191,11 +191,11 @@ export function registerMcpXaaIdpCommand(mcp: Command): void {
       const wasCached = getCachedIdpIdToken(idp.issuer) !== undefined
       if (wasCached) {
         return cliOk(
-          `Already logged in to ${idp.issuer} (cached id_token still valid). Use --force to re-login.`,
+          `已登录 ${idp.issuer}（缓存的 id_token 仍有效）。如需重新登录，请使用 --force。`,
         )
       }
 
-      process.stdout.write(`Opening browser for IdP login at ${idp.issuer}…\n`)
+      process.stdout.write(`正在打开浏览器登录 IdP：${idp.issuer}\n`)
       try {
         await acquireIdpIdToken({
           idpIssuer: idp.issuer,

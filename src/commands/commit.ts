@@ -17,50 +17,50 @@ function getPromptContent(): string {
     prefix = getUndercoverInstructions() + '\n'
   }
 
-  return `${prefix}## Context
+  return `${prefix}## 上下文
 
-- Current git status: !\`git status\`
-- Current git diff (staged and unstaged changes): !\`git diff HEAD\`
-- Current branch: !\`git branch --show-current\`
-- Recent commits: !\`git log --oneline -10\`
+- 当前 git 状态：!\`git status\`
+- 当前 git diff（包含已暂存和未暂存变更）：!\`git diff HEAD\`
+- 当前分支：!\`git branch --show-current\`
+- 最近提交：!\`git log --oneline -10\`
 
-## Git Safety Protocol
+## Git 安全协议
 
-- NEVER update the git config
-- NEVER skip hooks (--no-verify, --no-gpg-sign, etc) unless the user explicitly requests it
-- CRITICAL: ALWAYS create NEW commits. NEVER use git commit --amend, unless the user explicitly requests it
-- Do not commit files that likely contain secrets (.env, credentials.json, etc). Warn the user if they specifically request to commit those files
-- If there are no changes to commit (i.e., no untracked files and no modifications), do not create an empty commit
-- Never use git commands with the -i flag (like git rebase -i or git add -i) since they require interactive input which is not supported
+- 绝不要更新 git config
+- 除非用户明确要求，否则绝不要跳过 hooks（--no-verify、--no-gpg-sign 等）
+- 关键：始终创建新的 commit。除非用户明确要求，否则绝不要使用 git commit --amend
+- 不要提交很可能包含密钥的文件（.env、credentials.json 等）。如果用户明确要求提交这些文件，要先警告用户
+- 如果没有可提交的变更（没有未跟踪文件，也没有修改），不要创建空 commit
+- 绝不要使用带 -i 的 git 命令（例如 git rebase -i 或 git add -i），因为它们需要不受支持的交互输入
 
-## Your task
+## 你的任务
 
-Based on the above changes, create a single git commit:
+基于上述变更，创建一个 git commit：
 
-1. Analyze all staged changes and draft a commit message:
-   - Look at the recent commits above to follow this repository's commit message style
-   - Summarize the nature of the changes (new feature, enhancement, bug fix, refactoring, test, docs, etc.)
-   - Ensure the message accurately reflects the changes and their purpose (i.e. "add" means a wholly new feature, "update" means an enhancement to an existing feature, "fix" means a bug fix, etc.)
-   - Draft a concise (1-2 sentences) commit message that focuses on the "why" rather than the "what"
+1. 分析所有暂存变更并起草 commit message：
+   - 查看上面的最近提交，遵循此仓库的 commit message 风格
+   - 概括变更性质（新功能、增强、bug 修复、重构、测试、文档等）
+   - 确保 message 准确反映变更和目的，例如 "add" 表示全新功能，"update" 表示增强既有功能，"fix" 表示 bug 修复
+   - 起草简洁的 commit message（1-2 句话），重点说明为什么改，而不是只描述改了什么
 
-2. Stage relevant files and create the commit using HEREDOC syntax:
+2. 暂存相关文件，并使用 HEREDOC 语法创建 commit：
 \`\`\`
 git commit -m "$(cat <<'EOF'
-Commit message here.${commitAttribution ? `\n\n${commitAttribution}` : ''}
+这里写 commit message。${commitAttribution ? `\n\n${commitAttribution}` : ''}
 EOF
 )"
 \`\`\`
 
-You have the capability to call multiple tools in a single response. Stage and create the commit using a single message. Do not use any other tools or do anything else. Do not send any other text or messages besides these tool calls.`
+你可以在同一条回复中调用多个工具。请在同一条消息里完成暂存和创建 commit。不要使用其他工具，也不要做其他事。除这些工具调用外，不要发送任何额外文本或消息。`
 }
 
 const command = {
   type: 'prompt',
   name: 'commit',
-  description: 'Create a git commit',
+  description: '创建 git commit',
   allowedTools: ALLOWED_TOOLS,
   contentLength: 0, // Dynamic content
-  progressMessage: 'creating commit',
+  progressMessage: '正在创建 commit',
   source: 'builtin',
   async getPromptForCommand(_args, context) {
     const promptContent = getPromptContent()

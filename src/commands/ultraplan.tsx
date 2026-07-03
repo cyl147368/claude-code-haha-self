@@ -184,13 +184,13 @@ function startDetachedPoll(taskId: string, sessionId: string, url: string, getAp
 // multi-second teleportToRemote round-trip.
 function buildLaunchMessage(disconnectedBridge?: boolean): string {
   const prefix = disconnectedBridge ? `${REMOTE_CONTROL_DISCONNECTED_MSG} ` : '';
-  return `${DIAMOND_OPEN} ultraplan\n${prefix}Starting Claude Code on the web…`;
+  return `${DIAMOND_OPEN} ultraplan\n${prefix}正在启动 Claude Code on the web...`;
 }
 function buildSessionReadyMessage(url: string): string {
-  return `${DIAMOND_OPEN} ultraplan · Monitor progress in Claude Code on the web ${url}\nYou can continue working — when the ${DIAMOND_OPEN} fills, press ↓ to view results`;
+  return `${DIAMOND_OPEN} ultraplan · 在 Claude Code on the web 中查看进度 ${url}\n你可以继续工作；当 ${DIAMOND_OPEN} 填满时，按 ↓ 查看结果`;
 }
 function buildAlreadyActiveMessage(url: string | undefined): string {
-  return url ? `ultraplan: already polling. Open ${url} to check status, or wait for the plan to land here.` : 'ultraplan: already launching. Please wait for the session to start.';
+  return url ? `ultraplan：已经在轮询。打开 ${url} 查看状态，或等待计划回到这里。` : 'ultraplan：正在启动。请等待会话开始。';
 }
 
 /**
@@ -212,11 +212,11 @@ export async function stopUltraplan(taskId: string, sessionId: string, setAppSta
   } : prev);
   const url = getRemoteSessionUrl(sessionId, process.env.SESSION_INGRESS_URL);
   enqueuePendingNotification({
-    value: `Ultraplan stopped.\n\nSession: ${url}`,
+    value: `Ultraplan 已停止。\n\n会话：${url}`,
     mode: 'task-notification'
   });
   enqueuePendingNotification({
-    value: 'The user stopped the ultraplan session above. Do not respond to the stop notification — wait for their next message.',
+    value: '用户停止了上面的 ultraplan 会话。不要回复该停止通知；等待用户的下一条消息。',
     mode: 'task-notification',
     isMeta: true
   });

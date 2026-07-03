@@ -65,7 +65,7 @@ function MarketplaceList(t0) {
   useEffect(t1, t2);
   let t3;
   if ($[3] === Symbol.for("react.memo_cache_sentinel")) {
-    t3 = <Text>Loading marketplaces...</Text>;
+    t3 = <Text>正在加载 marketplaces...</Text>;
     $[3] = t3;
   } else {
     t3 = $[3];
@@ -457,7 +457,7 @@ function ErrorsTabContent(t0) {
               }
             }
           }));
-          setActionMessage(`${figures.tick} Removed "${action.name}" from ${scopes} settings`);
+          setActionMessage(`${figures.tick} 已从 ${scopes} 设置中移除 "${action.name}"`);
           markPluginsChanged();
           break bb77;
         }
@@ -469,11 +469,11 @@ function ErrorsTabContent(t0) {
               await removeMarketplaceSource(action.name);
               clearAllCaches();
               setMarketplaceLoadFailures(prev => prev.filter(f => f.name !== action.name));
-              setActionMessage(`${figures.tick} Removed marketplace "${action.name}"`);
+              setActionMessage(`${figures.tick} 已移除 marketplace "${action.name}"`);
               markPluginsChanged();
             } catch (t6) {
               const err = t6;
-              setActionMessage(`Failed to remove "${action.name}": ${err instanceof Error ? err.message : String(err)}`);
+              setActionMessage(`移除 "${action.name}" 失败：${err instanceof Error ? err.message : String(err)}`);
             }
           })();
           break bb77;
@@ -916,7 +916,7 @@ export function PluginSettings(t0) {
   if (viewState.type === "help") {
     let t16;
     if ($[28] === Symbol.for("react.memo_cache_sentinel")) {
-      t16 = <Box flexDirection="column"><Text bold={true}>Plugin Command Usage:</Text><Text> </Text><Text dimColor={true}>Installation:</Text><Text> /plugin install - Browse and install plugins</Text><Text>{" "}{"/plugin install <marketplace> - Install from specific marketplace"}</Text><Text>{" /plugin install <plugin> - Install specific plugin"}</Text><Text>{" "}{"/plugin install <plugin>@<market> - Install plugin from marketplace"}</Text><Text> </Text><Text dimColor={true}>Management:</Text><Text> /plugin manage - Manage installed plugins</Text><Text>{" /plugin enable <plugin> - Enable a plugin"}</Text><Text>{" /plugin disable <plugin> - Disable a plugin"}</Text><Text>{" /plugin uninstall <plugin> - Uninstall a plugin"}</Text><Text> </Text><Text dimColor={true}>Marketplaces:</Text><Text> /plugin marketplace - Marketplace management menu</Text><Text> /plugin marketplace add - Add a marketplace</Text><Text>{" "}{"/plugin marketplace add <path/url> - Add marketplace directly"}</Text><Text> /plugin marketplace update - Update marketplaces</Text><Text>{" "}{"/plugin marketplace update <name> - Update specific marketplace"}</Text><Text> /plugin marketplace remove - Remove a marketplace</Text><Text>{" "}{"/plugin marketplace remove <name> - Remove specific marketplace"}</Text><Text> /plugin marketplace list - List all marketplaces</Text><Text> </Text><Text dimColor={true}>Validation:</Text><Text>{" "}{"/plugin validate <path> - Validate a manifest file or directory"}</Text><Text> </Text><Text dimColor={true}>Other:</Text><Text> /plugin - Main plugin menu</Text><Text> /plugin help - Show this help</Text><Text> /plugins - Alias for /plugin</Text></Box>;
+      t16 = <Box flexDirection="column"><Text bold={true}>Plugin 命令用法：</Text><Text> </Text><Text dimColor={true}>安装：</Text><Text> /plugin install - 浏览并安装插件</Text><Text>{" "}{"/plugin install <marketplace> - 从指定 marketplace 安装"}</Text><Text>{" /plugin install <plugin> - 安装指定插件"}</Text><Text>{" "}{"/plugin install <plugin>@<market> - 从 marketplace 安装插件"}</Text><Text> </Text><Text dimColor={true}>管理：</Text><Text> /plugin manage - 管理已安装插件</Text><Text>{" /plugin enable <plugin> - 启用插件"}</Text><Text>{" /plugin disable <plugin> - 禁用插件"}</Text><Text>{" /plugin uninstall <plugin> - 卸载插件"}</Text><Text> </Text><Text dimColor={true}>Marketplaces：</Text><Text> /plugin marketplace - Marketplace 管理菜单</Text><Text> /plugin marketplace add - 添加 marketplace</Text><Text>{" "}{"/plugin marketplace add <path/url> - 直接添加 marketplace"}</Text><Text> /plugin marketplace update - 更新 marketplaces</Text><Text>{" "}{"/plugin marketplace update <name> - 更新指定 marketplace"}</Text><Text> /plugin marketplace remove - 移除 marketplace</Text><Text>{" "}{"/plugin marketplace remove <name> - 移除指定 marketplace"}</Text><Text> /plugin marketplace list - 列出所有 marketplaces</Text><Text> </Text><Text dimColor={true}>校验：</Text><Text>{" "}{"/plugin validate <path> - 校验 manifest 文件或目录"}</Text><Text> </Text><Text dimColor={true}>其他：</Text><Text> /plugin - 主插件菜单</Text><Text> /plugin help - 显示此帮助</Text><Text> /plugins - /plugin 的别名</Text></Box>;
       $[28] = t16;
     } else {
       t16 = $[28];

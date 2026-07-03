@@ -113,7 +113,7 @@ function Install({
 
         // Check specifically for lock failure
         if (result.lockFailed) {
-          throw new Error('Could not install - another process is currently installing Claude. Please try again in a moment.');
+          throw new Error('无法安装：另一个进程正在安装 Claude。请稍后重试。');
         }
 
         // If we couldn't get the version, there might be an issue

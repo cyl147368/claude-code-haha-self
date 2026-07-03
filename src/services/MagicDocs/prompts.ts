@@ -6,56 +6,56 @@ import { getFsImplementation } from '../../utils/fsOperations.js'
  * Get the Magic Docs update prompt template
  */
 function getUpdatePromptTemplate(): string {
-  return `IMPORTANT: This message and these instructions are NOT part of the actual user conversation. Do NOT include any references to "documentation updates", "magic docs", or these update instructions in the document content.
+  return `重要：这条消息和这些说明不属于真实用户对话。不要在文档内容中提及“文档更新”“magic docs”或这些更新说明。
 
-Based on the user conversation above (EXCLUDING this documentation update instruction message), update the Magic Doc file to incorporate any NEW learnings, insights, or information that would be valuable to preserve.
+请基于上方用户对话更新 Magic Doc 文件，纳入任何值得保留的新学习、新见解或新信息。排除这条文档更新说明消息。
 
-The file {{docPath}} has already been read for you. Here are its current contents:
+文件 {{docPath}} 已经为你读取。当前内容如下：
 <current_doc_content>
 {{docContents}}
 </current_doc_content>
 
-Document title: {{docTitle}}
+文档标题：{{docTitle}}
 {{customInstructions}}
 
-Your ONLY task is to use the Edit tool to update the documentation file if there is substantial new information to add, then stop. You can make multiple edits (update multiple sections as needed) - make all Edit tool calls in parallel in a single message. If there's nothing substantial to add, simply respond with a brief explanation and do not call any tools.
+你的唯一任务是：如果有实质性新信息需要添加，就使用 Edit 工具更新文档文件，然后停止。你可以进行多处编辑（按需更新多个章节），请在一条消息中并行发出所有 Edit 工具调用。如果没有实质性内容可加，只需简短说明，不要调用任何工具。
 
-CRITICAL RULES FOR EDITING:
-- Preserve the Magic Doc header exactly as-is: # MAGIC DOC: {{docTitle}}
-- If there's an italicized line immediately after the header, preserve it exactly as-is
-- Keep the document CURRENT with the latest state of the codebase - this is NOT a changelog or history
-- Update information IN-PLACE to reflect the current state - do NOT append historical notes or track changes over time
-- Remove or replace outdated information rather than adding "Previously..." or "Updated to..." notes
-- Clean up or DELETE sections that are no longer relevant or don't align with the document's purpose
-- Fix obvious errors: typos, grammar mistakes, broken formatting, incorrect information, or confusing statements
-- Keep the document well organized: use clear headings, logical section order, consistent formatting, and proper nesting
+编辑关键规则：
+- 原样保留 Magic Doc 标题：# MAGIC DOC: {{docTitle}}
+- 如果标题后紧跟斜体行，也必须原样保留
+- 让文档保持代码库最新状态；这不是 changelog 或历史记录
+- 在原位置更新信息以反映当前状态；不要追加历史备注或跟踪随时间变化的记录
+- 删除或替换过时信息，不要添加“Previously...”或“Updated to...”之类说明
+- 清理或删除不再相关、或不符合文档目的的章节
+- 修正明显错误：拼写、语法、破损格式、错误信息或令人困惑的表述
+- 保持文档组织良好：标题清晰、章节顺序合理、格式一致、层级正确
 
-DOCUMENTATION PHILOSOPHY - READ CAREFULLY:
-- BE TERSE. High signal only. No filler words or unnecessary elaboration.
-- Documentation is for OVERVIEWS, ARCHITECTURE, and ENTRY POINTS - not detailed code walkthroughs
-- Do NOT duplicate information that's already obvious from reading the source code
-- Do NOT document every function, parameter, or line number reference
-- Focus on: WHY things exist, HOW components connect, WHERE to start reading, WHAT patterns are used
-- Skip: detailed implementation steps, exhaustive API docs, play-by-play narratives
+文档理念 - 仔细阅读：
+- 保持简洁。只保留高信号内容。不要填充词或不必要展开。
+- 文档用于概览、架构和入口点，不用于详细代码导览。
+- 不要重复从源码可直接看出的信息。
+- 不要记录每个函数、参数或行号引用。
+- 聚焦：为什么存在、组件如何连接、从哪里开始阅读、使用了什么模式。
+- 跳过：详细实现步骤、穷尽式 API 文档、流水账叙述。
 
-What TO document:
-- High-level architecture and system design
-- Non-obvious patterns, conventions, or gotchas
-- Key entry points and where to start reading code
-- Important design decisions and their rationale
-- Critical dependencies or integration points
-- References to related files, docs, or code (like a wiki) - help readers navigate to relevant context
+应该记录什么：
+- 高层架构和系统设计
+- 不明显的模式、约定或坑点
+- 关键入口点，以及从哪里开始读代码
+- 重要设计决策及其理由
+- 关键依赖或集成点
+- 相关文件、文档或代码引用（像 wiki 一样），帮助读者跳到相关上下文
 
-What NOT to document:
-- Anything obvious from reading the code itself
-- Exhaustive lists of files, functions, or parameters
-- Step-by-step implementation details
-- Low-level code mechanics
-- Information already in CLAUDE.md or other project docs
+不应记录什么：
+- 读源码本身就很明显的内容
+- 文件、函数或参数的穷尽列表
+- 逐步实现细节
+- 底层代码机械过程
+- CLAUDE.md 或其他项目文档中已经存在的信息
 
-Use the Edit tool with file_path: {{docPath}}
+使用 Edit 工具，file_path 为：{{docPath}}
 
-REMEMBER: Only update if there is substantial new information. The Magic Doc header (# MAGIC DOC: {{docTitle}}) must remain unchanged.`
+记住：只有在有实质性新信息时才更新。Magic Doc 标题（# MAGIC DOC: {{docTitle}}）必须保持不变。`
 }
 
 /**
@@ -107,12 +107,12 @@ export async function buildMagicDocsUpdatePrompt(
   const customInstructions = instructions
     ? `
 
-DOCUMENT-SPECIFIC UPDATE INSTRUCTIONS:
-The document author has provided specific instructions for how this file should be updated. Pay extra attention to these instructions and follow them carefully:
+文档专用更新说明：
+文档作者提供了关于如何更新此文件的具体说明。请特别注意并严格遵循：
 
 "${instructions}"
 
-These instructions take priority over the general rules below. Make sure your updates align with these specific guidelines.`
+这些说明优先于下方通用规则。确保你的更新符合这些具体准则。`
     : ''
 
   // Substitute variables in the prompt

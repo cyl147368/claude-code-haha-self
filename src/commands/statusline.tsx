@@ -3,20 +3,20 @@ import type { Command } from '../commands.js';
 import { AGENT_TOOL_NAME } from '../tools/AgentTool/constants.js';
 const statusline = {
   type: 'prompt',
-  description: "Set up Claude Code's status line UI",
+  description: "设置 Claude Code 的状态栏 UI",
   contentLength: 0,
   // Dynamic content
   aliases: [],
   name: 'statusline',
-  progressMessage: 'setting up statusLine',
+  progressMessage: '正在设置 statusLine',
   allowedTools: [AGENT_TOOL_NAME, 'Read(~/**)', 'Edit(~/.claude/settings.json)'],
   source: 'builtin',
   disableNonInteractive: true,
   async getPromptForCommand(args): Promise<ContentBlockParam[]> {
-    const prompt = args.trim() || 'Configure my statusLine from my shell PS1 configuration';
+    const prompt = args.trim() || '根据我的 shell PS1 配置来配置 statusLine';
     return [{
       type: 'text',
-      text: `Create an ${AGENT_TOOL_NAME} with subagent_type "statusline-setup" and the prompt "${prompt}"`
+      text: `创建一个 ${AGENT_TOOL_NAME}，subagent_type 为 "statusline-setup"，prompt 为 "${prompt}"`
     }];
   }
 } satisfies Command;

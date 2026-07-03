@@ -15,12 +15,12 @@ export type RelevantMemory = {
   mtimeMs: number
 }
 
-const SELECT_MEMORIES_SYSTEM_PROMPT = `You are selecting memories that will be useful to Claude Code as it processes a user's query. You will be given the user's query and a list of available memory files with their filenames and descriptions.
+const SELECT_MEMORIES_SYSTEM_PROMPT = `你正在为 Claude Code 处理用户查询选择有用的记忆。你会收到用户查询，以及一组可用 memory files，包含文件名和描述。
 
-Return a list of filenames for the memories that will clearly be useful to Claude Code as it processes the user's query (up to 5). Only include memories that you are certain will be helpful based on their name and description.
-- If you are unsure if a memory will be useful in processing the user's query, then do not include it in your list. Be selective and discerning.
-- If there are no memories in the list that would clearly be useful, feel free to return an empty list.
-- If a list of recently-used tools is provided, do not select memories that are usage reference or API documentation for those tools (Claude Code is already exercising them). DO still select memories containing warnings, gotchas, or known issues about those tools — active use is exactly when those matter.
+返回一个 filename 列表，包含那些在 Claude Code 处理用户查询时明确有用的记忆（最多 5 个）。只包含你能根据名称和描述确信有帮助的记忆。
+- 如果不确定某条记忆是否有助于处理用户查询，请不要把它列入列表。要有选择性和判断力。
+- 如果列表中没有明确有用的记忆，可以返回空列表。
+- 如果提供了最近使用过的工具列表，不要选择这些工具的 usage reference 或 API documentation 记忆（Claude Code 已经在使用它们）。但仍要选择包含这些工具 warnings、gotchas 或 known issues 的记忆，因为主动使用时这些信息正重要。
 `
 
 /**
@@ -91,7 +91,7 @@ async function selectRelevantMemories(
   // description → false positive).
   const toolsSection =
     recentTools.length > 0
-      ? `\n\nRecently used tools: ${recentTools.join(', ')}`
+      ? `\n\n最近使用的工具：${recentTools.join(', ')}`
       : ''
 
   try {
@@ -102,7 +102,7 @@ async function selectRelevantMemories(
       messages: [
         {
           role: 'user',
-          content: `Query: ${query}\n\nAvailable memories:\n${manifest}${toolsSection}`,
+          content: `查询：${query}\n\n可用记忆：\n${manifest}${toolsSection}`,
         },
       ],
       max_tokens: 256,

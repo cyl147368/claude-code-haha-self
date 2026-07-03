@@ -51,18 +51,18 @@ function MemoryCommand({
         editorSource = '$EDITOR';
         editorValue = process.env.EDITOR;
       }
-      const editorInfo = editorSource !== 'default' ? `Using ${editorSource}="${editorValue}".` : '';
-      const editorHint = editorInfo ? `> ${editorInfo} To change editor, set $EDITOR or $VISUAL environment variable.` : `> To use a different editor, set the $EDITOR or $VISUAL environment variable.`;
-      onDone(`Opened memory file at ${getRelativeMemoryPath(memoryPath)}\n\n${editorHint}`, {
+      const editorInfo = editorSource !== 'default' ? `正在使用 ${editorSource}="${editorValue}"。` : '';
+      const editorHint = editorInfo ? `> ${editorInfo} 如需更改编辑器，请设置 $EDITOR 或 $VISUAL 环境变量。` : `> 如需使用其他编辑器，请设置 $EDITOR 或 $VISUAL 环境变量。`;
+      onDone(`已打开 memory 文件：${getRelativeMemoryPath(memoryPath)}\n\n${editorHint}`, {
         display: 'system'
       });
     } catch (error) {
       logError(error);
-      onDone(`Error opening memory file: ${error}`);
+      onDone(`打开 memory 文件时出错：${error}`);
     }
   };
   const handleCancel = () => {
-    onDone('Cancelled memory editing', {
+    onDone('已取消 memory 编辑', {
       display: 'system'
     });
   };

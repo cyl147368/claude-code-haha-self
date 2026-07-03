@@ -273,8 +273,8 @@ export async function call(
 
     // Resume into the fork
     const titleInfo = title ? ` "${title}"` : ''
-    const resumeHint = `\nTo resume the original: claude -r ${originalSessionId}`
-    const successMessage = `Branched conversation${titleInfo}. You are now in the branch.${resumeHint}`
+    const resumeHint = `\n要恢复原会话：claude -r ${originalSessionId}`
+    const successMessage = `已创建会话分支${titleInfo}。你现在位于该分支中。${resumeHint}`
 
     if (context.resume) {
       await context.resume(sessionId, forkLog, 'fork')
@@ -282,15 +282,15 @@ export async function call(
     } else {
       // Fallback if resume not available
       onDone(
-        `Branched conversation${titleInfo}. Resume with: /resume ${sessionId}`,
+        `已创建会话分支${titleInfo}。可用以下命令恢复：/resume ${sessionId}`,
       )
     }
 
     return null
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Unknown error occurred'
-    onDone(`Failed to branch conversation: ${message}`)
+      error instanceof Error ? error.message : '发生未知错误'
+    onDone(`创建会话分支失败：${message}`)
     return null
   }
 }

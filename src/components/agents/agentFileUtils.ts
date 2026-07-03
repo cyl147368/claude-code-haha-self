@@ -60,7 +60,7 @@ ${systemPrompt}
 function getAgentDirectoryPath(location: SettingSource): string {
   switch (location) {
     case 'flagSettings':
-      throw new Error(`Cannot get directory path for ${location} agents`)
+      throw new Error(`无法获取 ${location} agents 的目录路径`)
     case 'userSettings':
       return join(getClaudeConfigHomeDir(), AGENT_PATHS.AGENTS_DIR)
     case 'projectSettings':
@@ -103,10 +103,10 @@ export function getNewAgentFilePath(agent: {
  */
 export function getActualAgentFilePath(agent: AgentDefinition): string {
   if (agent.source === 'built-in') {
-    return 'Built-in'
+    return '内置'
   }
   if (agent.source === 'plugin') {
-    throw new Error('Cannot get file path for plugin agents')
+    throw new Error('无法获取 plugin agents 的文件路径')
   }
 
   const dirPath = getAgentDirectoryPath(agent.source)
@@ -123,7 +123,7 @@ export function getNewRelativeAgentFilePath(agent: {
   agentType: string
 }): string {
   if (agent.source === 'built-in') {
-    return 'Built-in'
+    return '内置'
   }
   const dirPath = getRelativeAgentDirectoryPath(agent.source)
   return join(dirPath, `${agent.agentType}.md`)
@@ -134,13 +134,13 @@ export function getNewRelativeAgentFilePath(agent: {
  */
 export function getActualRelativeAgentFilePath(agent: AgentDefinition): string {
   if (isBuiltInAgent(agent)) {
-    return 'Built-in'
+    return '内置'
   }
   if (isPluginAgent(agent)) {
-    return `Plugin: ${agent.plugin || 'Unknown'}`
+    return `Plugin：${agent.plugin || '未知'}`
   }
   if (agent.source === 'flagSettings') {
-    return 'CLI argument'
+    return 'CLI 参数'
   }
 
   const dirPath = getRelativeAgentDirectoryPath(agent.source)
@@ -176,7 +176,7 @@ export async function saveAgentToFile(
   effort?: EffortValue,
 ): Promise<void> {
   if (source === 'built-in') {
-    throw new Error('Cannot save built-in agents')
+    throw new Error('无法保存内置 agents')
   }
 
   await ensureAgentDirectoryExists(source)
@@ -196,7 +196,7 @@ export async function saveAgentToFile(
     await writeFileAndFlush(filePath, content, checkExists ? 'wx' : 'w')
   } catch (e: unknown) {
     if (getErrnoCode(e) === 'EEXIST') {
-      throw new Error(`Agent file already exists: ${filePath}`)
+      throw new Error(`Agent 文件已存在：${filePath}`)
     }
     throw e
   }
@@ -216,7 +216,7 @@ export async function updateAgentFile(
   newEffort?: EffortValue,
 ): Promise<void> {
   if (agent.source === 'built-in') {
-    throw new Error('Cannot update built-in agents')
+    throw new Error('无法更新内置 agents')
   }
 
   const filePath = getActualAgentFilePath(agent)
@@ -242,7 +242,7 @@ export async function deleteAgentFromFile(
   agent: AgentDefinition,
 ): Promise<void> {
   if (agent.source === 'built-in') {
-    throw new Error('Cannot delete built-in agents')
+    throw new Error('无法删除内置 agents')
   }
 
   const filePath = getActualAgentFilePath(agent)

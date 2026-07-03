@@ -22,12 +22,12 @@ export const call: LocalCommandCall = async () => {
       return {
         type: 'text' as const,
         value:
-          'Voice mode requires a Claude.ai account. Please run /login to sign in.',
+          '语音模式需要 Claude.ai 账号。请运行 /login 登录。',
       }
     }
     return {
       type: 'text' as const,
-      value: 'Voice mode is not available.',
+      value: '语音模式不可用。',
     }
   }
 
@@ -43,14 +43,14 @@ export const call: LocalCommandCall = async () => {
       return {
         type: 'text' as const,
         value:
-          'Failed to update settings. Check your settings file for syntax errors.',
+          '更新设置失败。请检查 settings 文件是否有语法错误。',
       }
     }
     settingsChangeDetector.notifyChange('userSettings')
     logEvent('tengu_voice_toggled', { enabled: false })
     return {
       type: 'text' as const,
-      value: 'Voice mode disabled.',
+      value: '语音模式已关闭。',
     }
   }
 
@@ -66,16 +66,16 @@ export const call: LocalCommandCall = async () => {
     return {
       type: 'text' as const,
       value:
-        recording.reason ?? 'Voice mode is not available in this environment.',
+        recording.reason ?? '此环境中语音模式不可用。',
     }
   }
 
   // Check for API key
   if (!isVoiceStreamAvailable()) {
     return {
-      type: 'text' as const,
-      value:
-        'Voice mode requires a Claude.ai account. Please run /login to sign in.',
+        type: 'text' as const,
+        value:
+        '语音模式需要 Claude.ai 账号。请运行 /login 登录。',
     }
   }
 
@@ -86,8 +86,8 @@ export const call: LocalCommandCall = async () => {
   const deps = await checkVoiceDependencies()
   if (!deps.available) {
     const hint = deps.installCommand
-      ? `\nInstall audio recording tools? Run: ${deps.installCommand}`
-      : '\nInstall SoX manually for audio recording.'
+      ? `\n要安装音频录制工具吗？运行：${deps.installCommand}`
+      : '\n请手动安装 SoX 以进行音频录制。'
     return {
       type: 'text' as const,
       value: `No audio recording tool found.${hint}`,
@@ -101,13 +101,13 @@ export const call: LocalCommandCall = async () => {
     if (process.platform === 'win32') {
       guidance = 'Settings \u2192 Privacy \u2192 Microphone'
     } else if (process.platform === 'linux') {
-      guidance = "your system's audio settings"
+      guidance = '系统音频设置'
     } else {
       guidance = 'System Settings \u2192 Privacy & Security \u2192 Microphone'
     }
     return {
       type: 'text' as const,
-      value: `Microphone access is denied. To enable it, go to ${guidance}, then run /voice again.`,
+      value: `麦克风访问被拒绝。要启用它，请前往 ${guidance}，然后再次运行 /voice。`,
     }
   }
 
@@ -115,9 +115,9 @@ export const call: LocalCommandCall = async () => {
   const result = updateSettingsForSource('userSettings', { voiceEnabled: true })
   if (result.error) {
     return {
-      type: 'text' as const,
-      value:
-        'Failed to update settings. Check your settings file for syntax errors.',
+        type: 'text' as const,
+        value:
+        '更新设置失败。请检查 settings 文件是否有语法错误。',
     }
   }
   settingsChangeDetector.notifyChange('userSettings')
@@ -132,9 +132,9 @@ export const call: LocalCommandCall = async () => {
   const showHint = !stt.fellBackFrom && priorCount < LANG_HINT_MAX_SHOWS
   let langNote = ''
   if (stt.fellBackFrom) {
-    langNote = ` Note: "${stt.fellBackFrom}" is not a supported dictation language; using English. Change it via /config.`
+    langNote = ` 注意："${stt.fellBackFrom}" 不是受支持的听写语言；将使用 English。可通过 /config 修改。`
   } else if (showHint) {
-    langNote = ` Dictation language: ${stt.code} (/config to change).`
+    langNote = ` 听写语言：${stt.code}（可通过 /config 修改）。`
   }
   if (langChanged || showHint) {
     saveGlobalConfig(prev => ({
@@ -145,6 +145,6 @@ export const call: LocalCommandCall = async () => {
   }
   return {
     type: 'text' as const,
-    value: `Voice mode enabled. Hold ${key} to record.${langNote}`,
+    value: `语音模式已开启。按住 ${key} 开始录音。${langNote}`,
   }
 }

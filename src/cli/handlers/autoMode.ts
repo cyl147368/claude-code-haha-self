@@ -1,6 +1,6 @@
 /**
- * Auto mode subcommand handlers — dump default/merged classifier rules and
- * critique user-written rules. Dynamically imported when `claude auto-mode ...` runs.
+ * Auto mode 子命令处理器：dump 默认/合并后的分类器规则，并审查用户编写的规则。
+ * 在运行 `claude auto-mode ...` 时动态导入。
  */
 
 import { errorMessage } from '../../utils/errors.js'
@@ -26,11 +26,8 @@ export function autoModeDefaultsHandler(): void {
 }
 
 /**
- * Dump the effective auto mode config: user settings where provided, external
- * defaults otherwise. Per-section REPLACE semantics — matches how
- * buildYoloSystemPrompt resolves the external template (a non-empty user
- * section replaces that section's defaults entirely; an empty/absent section
- * falls through to defaults).
+ * 输出生效的 auto mode 配置：用户设置优先，否则使用外部默认值。
+ * 每个 section 使用 REPLACE 语义；这与 buildYoloSystemPrompt 解析外部模板的方式一致。
  */
 export function autoModeConfigHandler(): void {
   const config = getAutoModeConfig()
@@ -47,28 +44,23 @@ export function autoModeConfigHandler(): void {
 }
 
 const CRITIQUE_SYSTEM_PROMPT =
-  'You are an expert reviewer of auto mode classifier rules for Claude Code.\n' +
+  '你是 Claude Code auto mode 分类器规则的专家审查员。\n' +
   '\n' +
-  'Claude Code has an "auto mode" that uses an AI classifier to decide whether ' +
-  'tool calls should be auto-approved or require user confirmation. Users can ' +
-  'write custom rules in three categories:\n' +
+  'Claude Code 有一个 "auto mode"，它会用 AI 分类器判断工具调用应自动批准，还是需要用户确认。用户可以在三个类别中编写自定义规则：\n' +
   '\n' +
-  '- **allow**: Actions the classifier should auto-approve\n' +
-  '- **soft_deny**: Actions the classifier should block (require user confirmation)\n' +
-  "- **environment**: Context about the user's setup that helps the classifier make decisions\n" +
+  '- **allow**：分类器应自动批准的操作\n' +
+  '- **soft_deny**：分类器应阻止并要求用户确认的操作\n' +
+  '- **environment**：关于用户环境的上下文，帮助分类器做决定\n' +
   '\n' +
-  "Your job is to critique the user's custom rules for clarity, completeness, " +
-  'and potential issues. The classifier is an LLM that reads these rules as ' +
-  'part of its system prompt.\n' +
+  '你的工作是审查用户自定义规则的清晰度、完整性和潜在问题。该分类器是一个 LLM，会把这些规则作为 system prompt 的一部分来阅读。\n' +
   '\n' +
-  'For each rule, evaluate:\n' +
-  '1. **Clarity**: Is the rule unambiguous? Could the classifier misinterpret it?\n' +
-  "2. **Completeness**: Are there gaps or edge cases the rule doesn't cover?\n" +
-  '3. **Conflicts**: Do any of the rules conflict with each other?\n' +
-  '4. **Actionability**: Is the rule specific enough for the classifier to act on?\n' +
+  '对每条规则评估：\n' +
+  '1. **清晰度**：规则是否明确？分类器会不会误解？\n' +
+  '2. **完整性**：是否有未覆盖的缺口或边界情况？\n' +
+  '3. **冲突**：规则之间是否互相冲突？\n' +
+  '4. **可执行性**：规则是否足够具体，能让分类器据此行动？\n' +
   '\n' +
-  'Be concise and constructive. Only comment on rules that could be improved. ' +
-  'If all rules look good, say so.'
+  '保持简洁、建设性。只评论可以改进的规则。如果所有规则看起来都没问题，请明确说明。'
 
 export async function autoModeCritiqueHandler(options: {
   model?: string
@@ -81,9 +73,9 @@ export async function autoModeCritiqueHandler(options: {
 
   if (!hasCustomRules) {
     process.stdout.write(
-      'No custom auto mode rules found.\n\n' +
-        'Add rules to your settings file under autoMode.{allow, soft_deny, environment}.\n' +
-        'Run `claude auto-mode defaults` to see the default rules for reference.\n',
+      '未找到自定义 auto mode 规则。\n\n' +
+        '请在 settings 文件的 autoMode.{allow, soft_deny, environment} 下添加规则。\n' +
+        '运行 `claude auto-mode defaults` 可查看默认规则作为参考。\n',
     )
     return
   }
@@ -108,7 +100,7 @@ export async function autoModeCritiqueHandler(options: {
       defaults.environment,
     )
 
-  process.stdout.write('Analyzing your auto mode rules…\n\n')
+  process.stdout.write('正在分析你的 auto mode 规则...\n\n')
 
   let response
   try {
@@ -122,20 +114,18 @@ export async function autoModeCritiqueHandler(options: {
         {
           role: 'user',
           content:
-            'Here is the full classifier system prompt that the auto mode classifier receives:\n\n' +
+            '这是 auto mode 分类器收到的完整 classifier system prompt：\n\n' +
             '<classifier_system_prompt>\n' +
             classifierPrompt +
             '\n</classifier_system_prompt>\n\n' +
-            "Here are the user's custom rules that REPLACE the corresponding default sections:\n\n" +
+            '下面是用户自定义规则，它们会替换对应默认 section：\n\n' +
             userRulesSummary +
-            '\nPlease critique these custom rules.',
+            '\n请审查这些自定义规则。',
         },
       ],
     })
   } catch (error) {
-    process.stderr.write(
-      'Failed to analyze rules: ' + errorMessage(error) + '\n',
-    )
+    process.stderr.write('规则分析失败：' + errorMessage(error) + '\n')
     process.exitCode = 1
     return
   }
@@ -144,7 +134,7 @@ export async function autoModeCritiqueHandler(options: {
   if (textBlock?.type === 'text') {
     process.stdout.write(textBlock.text + '\n')
   } else {
-    process.stdout.write('No critique was generated. Please try again.\n')
+    process.stdout.write('未生成审查结果。请重试。\n')
   }
 }
 
@@ -159,11 +149,11 @@ function formatRulesForCritique(
   return (
     '## ' +
     section +
-    ' (custom rules replacing defaults)\n' +
-    'Custom:\n' +
+    '（替换默认值的自定义规则）\n' +
+    '自定义规则：\n' +
     customLines +
     '\n\n' +
-    'Defaults being replaced:\n' +
+    '被替换的默认规则：\n' +
     defaultLines +
     '\n\n'
   )

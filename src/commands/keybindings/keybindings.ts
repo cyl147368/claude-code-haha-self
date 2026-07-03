@@ -13,7 +13,7 @@ export async function call(): Promise<{ type: 'text'; value: string }> {
     return {
       type: 'text',
       value:
-        'Keybinding customization is not enabled. This feature is currently in preview.',
+        '快捷键自定义尚未启用。此功能目前仍处于预览阶段。',
     }
   }
 
@@ -41,13 +41,13 @@ export async function call(): Promise<{ type: 'text'; value: string }> {
   if (result.error) {
     return {
       type: 'text',
-      value: `${fileExists ? 'Opened' : 'Created'} ${keybindingsPath}. Could not open in editor: ${result.error}`,
+      value: `${fileExists ? '已打开' : '已创建'} ${keybindingsPath}。无法在编辑器中打开：${result.error}`,
     }
   }
   return {
     type: 'text',
     value: fileExists
-      ? `Opened ${keybindingsPath} in your editor.`
-      : `Created ${keybindingsPath} with template. Opened in your editor.`,
+      ? `已在编辑器中打开 ${keybindingsPath}。`
+      : `已使用模板创建 ${keybindingsPath}，并在编辑器中打开。`,
   }
 }
