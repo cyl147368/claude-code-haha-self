@@ -11,13 +11,13 @@ export function WizardNavigationFooter({
   instructions = <Byline>
       <KeyboardShortcutHint shortcut="↑↓" action="navigate" />
       <KeyboardShortcutHint shortcut="Enter" action="select" />
-      <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="go back" />
+      <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="返回" />
     </Byline>
 }: Props): ReactNode {
   const exitState = useExitOnCtrlCDWithKeybindings();
   return <Box marginLeft={3} marginTop={1}>
       <Text dimColor>
-        {exitState.pending ? `Press ${exitState.keyName} again to exit` : instructions}
+        {exitState.pending ? `再次按 ${exitState.keyName} 退出` : instructions}
       </Text>
     </Box>;
 }

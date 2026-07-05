@@ -6,6 +6,7 @@ import { isRateLimitErrorMessage } from 'src/services/rateLimitMessages.js';
 import { BLACK_CIRCLE } from '../../constants/figures.js';
 import { Box, NoSelect, Text } from '../../ink.js';
 import { API_ERROR_MESSAGE_PREFIX, API_TIMEOUT_ERROR_MESSAGE, CREDIT_BALANCE_TOO_LOW_ERROR_MESSAGE, CUSTOM_OFF_SWITCH_MESSAGE, INVALID_API_KEY_ERROR_MESSAGE, INVALID_API_KEY_ERROR_MESSAGE_EXTERNAL, ORG_DISABLED_ERROR_MESSAGE_ENV_KEY, ORG_DISABLED_ERROR_MESSAGE_ENV_KEY_WITH_OAUTH, PROMPT_TOO_LONG_ERROR_MESSAGE, startsWithApiErrorPrefix, TOKEN_REVOKED_ERROR_MESSAGE } from '../../services/api/errors.js';
+import { sanitizeAPIErrorMessageText } from '../../services/api/errorUtils.js';
 import { isEmptyMessageText, NO_RESPONSE_REQUESTED } from '../../utils/messages.js';
 import { getUpgradeMessage } from '../../utils/model/contextWindowUpgradeCheck.js';
 import { getDefaultSonnetModel, renderModelName } from '../../utils/model/model.js';
@@ -157,7 +158,7 @@ export function AssistantTextMessage(t0) {
       {
         let t2;
         if ($[11] === Symbol.for("react.memo_cache_sentinel")) {
-          t2 = <MessageResponse height={1}><Text color="error">{API_TIMEOUT_ERROR_MESSAGE}{process.env.API_TIMEOUT_MS && <>{" "}(API_TIMEOUT_MS={process.env.API_TIMEOUT_MS}ms, try increasing it)</>}</Text></MessageResponse>;
+          t2 = <MessageResponse height={1}><Text color="error">{API_TIMEOUT_ERROR_MESSAGE}{process.env.API_TIMEOUT_MS && <>{" "}(API_TIMEOUT_MS={process.env.API_TIMEOUT_MS}ms，可尝试调大)</>}</Text></MessageResponse>;
           $[11] = t2;
         } else {
           t2 = $[11];
@@ -196,8 +197,9 @@ export function AssistantTextMessage(t0) {
     default:
       {
         if (startsWithApiErrorPrefix(text)) {
-          const truncated = !verbose && text.length > MAX_API_ERROR_CHARS;
-          const t2 = text === API_ERROR_MESSAGE_PREFIX ? `${API_ERROR_MESSAGE_PREFIX}: Please wait a moment and try again.` : truncated ? text.slice(0, MAX_API_ERROR_CHARS) + "\u2026" : text;
+          const formattedText = sanitizeAPIErrorMessageText(text);
+          const truncated = !verbose && formattedText.length > MAX_API_ERROR_CHARS;
+          const t2 = formattedText === API_ERROR_MESSAGE_PREFIX ? `${API_ERROR_MESSAGE_PREFIX}: 请稍后再试。` : truncated ? formattedText.slice(0, MAX_API_ERROR_CHARS) + "\u2026" : formattedText;
           let t3;
           if ($[15] !== t2) {
             t3 = <Text color="error">{t2}</Text>;

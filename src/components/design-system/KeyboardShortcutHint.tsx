@@ -11,6 +11,32 @@ type Props = {
   /** Whether to render the shortcut in bold. Default: false */
   bold?: boolean;
 };
+const ACTION_LABELS: Record<string, string> = {
+  add: "添加",
+  back: "返回",
+  cancel: "取消",
+  clear: "清除",
+  close: "关闭",
+  complete: "补全",
+  confirm: "确认",
+  copy: "复制",
+  "copy link": "复制链接",
+  exit: "退出",
+  foreground: "前台显示",
+  "go back": "返回",
+  navigate: "导航",
+  preview: "预览",
+  rename: "重命名",
+  save: "保存",
+  search: "搜索",
+  select: "选择",
+  skip: "跳过",
+  stop: "停止",
+  toggle: "切换"
+};
+function formatActionLabel(action: string): string {
+  return ACTION_LABELS[action] ?? action;
+}
 
 /**
  * Renders a keyboard shortcut hint like "ctrl+o to expand" or "(tab to toggle)"
@@ -55,11 +81,12 @@ export function KeyboardShortcutHint(t0) {
     t3 = $[2];
   }
   const shortcutText = t3;
+  const actionLabel = formatActionLabel(action);
   if (parens) {
     let t4;
-    if ($[3] !== action || $[4] !== shortcutText) {
-      t4 = <Text>({shortcutText} to {action})</Text>;
-      $[3] = action;
+    if ($[3] !== actionLabel || $[4] !== shortcutText) {
+      t4 = <Text>（{shortcutText}：{actionLabel}）</Text>;
+      $[3] = actionLabel;
       $[4] = shortcutText;
       $[5] = t4;
     } else {
@@ -68,9 +95,9 @@ export function KeyboardShortcutHint(t0) {
     return t4;
   }
   let t4;
-  if ($[6] !== action || $[7] !== shortcutText) {
-    t4 = <Text>{shortcutText} to {action}</Text>;
-    $[6] = action;
+  if ($[6] !== actionLabel || $[7] !== shortcutText) {
+    t4 = <Text>{shortcutText}：{actionLabel}</Text>;
+    $[6] = actionLabel;
     $[7] = shortcutText;
     $[8] = t4;
   } else {

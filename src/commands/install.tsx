@@ -237,26 +237,26 @@ function Install({
           <Box>
             <StatusIcon status="success" withSpace />
             <Text color="success" bold>
-              Claude Code successfully installed!
+              Claude Code 安装成功！
             </Text>
           </Box>
           <Box marginLeft={2} flexDirection="column" gap={1}>
             {state.version !== 'current' && <Box>
-                <Text dimColor>Version: </Text>
+                <Text dimColor>版本：</Text>
                 <Text color="claude">{state.version}</Text>
               </Box>}
             <Box>
-              <Text dimColor>Location: </Text>
+              <Text dimColor>位置：</Text>
               <Text color="text">{getInstallationPath()}</Text>
             </Box>
           </Box>
           <Box marginLeft={2} flexDirection="column" gap={1}>
             <Box marginTop={1}>
-              <Text dimColor>Next: Run </Text>
+              <Text dimColor>下一步：运行 </Text>
               <Text color="claude" bold>
                 claude --help
               </Text>
-              <Text dimColor> to get started</Text>
+              <Text dimColor> 开始使用</Text>
             </Box>
           </Box>
           {state.setupMessages && <SetupNotes messages={state.setupMessages} />}

@@ -147,7 +147,7 @@ export function PromptInputFooterLeftSide(t0) {
   if (exitMessage.show) {
     let t1;
     if ($[0] !== exitMessage.key) {
-      t1 = <Text dimColor={true} key="exit-message">Press {exitMessage.key} again to exit</Text>;
+      t1 = <Text dimColor={true} key="exit-message">再次按 {exitMessage.key} 退出</Text>;
       $[0] = exitMessage.key;
       $[1] = t1;
     } else {
@@ -158,7 +158,7 @@ export function PromptInputFooterLeftSide(t0) {
   if (isPasting) {
     let t1;
     if ($[2] === Symbol.for("react.memo_cache_sentinel")) {
-      t1 = <Text dimColor={true} key="pasting-message">Pasting text…</Text>;
+      t1 = <Text dimColor={true} key="pasting-message">正在粘贴文本...</Text>;
       $[2] = t1;
     } else {
       t1 = $[2];

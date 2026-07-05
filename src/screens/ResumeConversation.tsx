@@ -190,7 +190,7 @@ export function ResumeConversation({
     try {
       const result_3 = await loadConversationForResume(log_0, undefined);
       if (!result_3) {
-        throw new Error('Failed to load conversation');
+        throw new Error('加载对话失败');
       }
       if (feature('COORDINATOR_MODE')) {
         /* eslint-disable @typescript-eslint/no-require-imports */
@@ -327,7 +327,7 @@ function NoConversationsMessage() {
   useKeybinding("app:interrupt", _temp, t0);
   let t1;
   if ($[1] === Symbol.for("react.memo_cache_sentinel")) {
-    t1 = <Box flexDirection="column"><Text>No conversations found to resume.</Text><Text dimColor={true}>Press Ctrl+C to exit and start a new conversation.</Text></Box>;
+    t1 = <Box flexDirection="column"><Text>没有找到可恢复的对话。</Text><Text dimColor={true}>按 Ctrl+C 退出并开始新对话。</Text></Box>;
     $[1] = t1;
   } else {
     t1 = $[1];

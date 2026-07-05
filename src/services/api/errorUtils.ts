@@ -104,13 +104,22 @@ export function getSSLErrorHint(error: unknown): string | null {
  * returning a user-friendly title or empty string if HTML is detected.
  * Returns the original message unchanged if no HTML is found.
  */
-function sanitizeMessageHTML(message: string): string {
-  if (message.includes('<!DOCTYPE html') || message.includes('<html')) {
+export function isHTMLAPIErrorMessage(message: string): boolean {
+  return message.includes('<!DOCTYPE html') || message.includes('<html')
+}
+
+export function sanitizeAPIErrorMessageText(
+  message: string,
+  status?: number,
+): string {
+  if (isHTMLAPIErrorMessage(message)) {
+    const detectedStatus = status ?? message.match(/\b([45]\d\d)\b/)?.[1]
     const titleMatch = message.match(/<title>([^<]+)<\/title>/)
+    const statusText = detectedStatus ? `HTTP ${detectedStatus}` : 'API 请求失败'
     if (titleMatch && titleMatch[1]) {
-      return titleMatch[1].trim()
+      return `${statusText}：服务器返回了 HTML 错误页（${titleMatch[1].trim()}）。请检查 ANTHROPIC_BASE_URL 或代理网关配置。`
     }
-    return ''
+    return `${statusText}：服务器返回了 HTML 错误页。请检查 ANTHROPIC_BASE_URL 或代理网关配置。`
   }
   return message
 }
@@ -126,7 +135,7 @@ export function sanitizeAPIError(apiError: APIError): string {
     // TODO: figure out why
     return ''
   }
-  return sanitizeMessageHTML(message)
+  return sanitizeAPIErrorMessageText(message, apiError.status)
 }
 
 /**
@@ -179,7 +188,7 @@ function extractNestedErrorMessage(error: APIError): string | null {
   // Standard Anthropic API shape: { error: { error: { message } } }
   const deepMsg = nested?.error?.message
   if (typeof deepMsg === 'string' && deepMsg.length > 0) {
-    const sanitized = sanitizeMessageHTML(deepMsg)
+    const sanitized = sanitizeAPIErrorMessageText(deepMsg, error.status)
     if (sanitized.length > 0) {
       return sanitized
     }
@@ -188,7 +197,7 @@ function extractNestedErrorMessage(error: APIError): string | null {
   // Bedrock shape: { error: { message } }
   const msg = nested?.message
   if (typeof msg === 'string' && msg.length > 0) {
-    const sanitized = sanitizeMessageHTML(msg)
+    const sanitized = sanitizeAPIErrorMessageText(msg, error.status)
     if (sanitized.length > 0) {
       return sanitized
     }

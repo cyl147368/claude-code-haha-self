@@ -40,7 +40,7 @@ export async function call(
     )
     if (!generated) {
       onDone(
-        'Could not generate a name: no conversation context yet. Usage: /rename <name>',
+        '无法生成名称：当前还没有对话上下文。用法：/rename <名称>',
         { display: 'system' },
       )
       return null

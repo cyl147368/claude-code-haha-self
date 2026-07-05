@@ -112,7 +112,7 @@ export function QuickOpenDialog(t0) {
         }
         setPreview({
           path: focusedPath,
-          content: "(preview unavailable)"
+          content: "(预览不可用)"
         });
       });
       return () => controller.abort();
@@ -168,7 +168,7 @@ export function QuickOpenDialog(t0) {
   let t10;
   if ($[15] !== handleInsert) {
     t10 = {
-      action: "mention",
+      action: "引用",
       handler: p_4 => handleInsert(p_4, true)
     };
     $[15] = handleInsert;
@@ -179,7 +179,7 @@ export function QuickOpenDialog(t0) {
   let t11;
   if ($[17] !== handleInsert) {
     t11 = {
-      action: "insert path",
+      action: "插入路径",
       handler: p_5 => handleInsert(p_5, false)
     };
     $[17] = handleInsert;
@@ -197,7 +197,7 @@ export function QuickOpenDialog(t0) {
   }
   let t13;
   if ($[21] !== preview || $[22] !== previewWidth || $[23] !== query) {
-    t13 = p_7 => preview ? <><Text dimColor={true}>{truncatePathMiddle(p_7, previewWidth)}{preview.path !== p_7 ? " \xB7 loading\u2026" : ""}</Text>{preview.content.split("\n").map((line, i_1) => <Text key={i_1}>{highlightMatch(truncateToWidth(line, previewWidth), query)}</Text>)}</> : <LoadingState message={"Loading preview\u2026"} dimColor={true} />;
+    t13 = p_7 => preview ? <><Text dimColor={true}>{truncatePathMiddle(p_7, previewWidth)}{preview.path !== p_7 ? " \xB7 加载中..." : ""}</Text>{preview.content.split("\n").map((line, i_1) => <Text key={i_1}>{highlightMatch(truncateToWidth(line, previewWidth), query)}</Text>)}</> : <LoadingState message={"正在加载预览..."} dimColor={true} />;
     $[21] = preview;
     $[22] = previewWidth;
     $[23] = query;
@@ -207,7 +207,7 @@ export function QuickOpenDialog(t0) {
   }
   let t14;
   if ($[25] !== handleOpen || $[26] !== onDone || $[27] !== results || $[28] !== t10 || $[29] !== t11 || $[30] !== t12 || $[31] !== t13 || $[32] !== t9 || $[33] !== visibleResults) {
-    t14 = <FuzzyPicker title="Quick Open" placeholder={"Type to search files\u2026"} items={results} getKey={_temp5} visibleCount={visibleResults} direction="up" previewPosition={t9} onQueryChange={handleQueryChange} onFocus={setFocusedPath} onSelect={handleOpen} onTab={t10} onShiftTab={t11} onCancel={onDone} emptyMessage={_temp6} selectAction="open in editor" renderItem={t12} renderPreview={t13} />;
+    t14 = <FuzzyPicker title="快速打开" placeholder={"输入以搜索文件..."} items={results} getKey={_temp5} visibleCount={visibleResults} direction="up" previewPosition={t9} onQueryChange={handleQueryChange} onFocus={setFocusedPath} onSelect={handleOpen} onTab={t10} onShiftTab={t11} onCancel={onDone} emptyMessage={_temp6} selectAction="在编辑器中打开" renderItem={t12} renderPreview={t13} />;
     $[25] = handleOpen;
     $[26] = onDone;
     $[27] = results;
@@ -224,7 +224,7 @@ export function QuickOpenDialog(t0) {
   return t14;
 }
 function _temp6(q_0) {
-  return q_0 ? "No matching files" : "Start typing to search\u2026";
+  return q_0 ? "没有匹配的文件" : "输入内容开始搜索...";
 }
 function _temp5(p_3) {
   return p_3;

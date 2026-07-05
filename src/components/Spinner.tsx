@@ -230,22 +230,22 @@ function SpinnerWithVerbInner({
     return <Box flexDirection="column" width="100%" alignItems="flex-start">
         <Box flexDirection="row" flexWrap="wrap" marginTop={1} width="100%">
           <Text dimColor>
-            {TEARDROP_ASTERISK} Idle
-            {!allIdle && ' · teammates running'}
+            {TEARDROP_ASTERISK} 空闲
+            {!allIdle && ' · 队友仍在运行'}
           </Text>
         </Box>
-        {showSpinnerTree && <TeammateSpinnerTree selectedIndex={selectedIPAgentIndex} isInSelectionMode={viewSelectionMode === 'selecting-agent'} allIdle={allIdle} leaderTokenCount={leaderTokenCount} leaderIdleText="Idle" />}
+        {showSpinnerTree && <TeammateSpinnerTree selectedIndex={selectedIPAgentIndex} isInSelectionMode={viewSelectionMode === 'selecting-agent'} allIdle={allIdle} leaderTokenCount={leaderTokenCount} leaderIdleText="空闲" />}
       </Box>;
   }
 
   // When viewing an idle teammate, show static idle display instead of animated spinner
   if (foregroundedTeammate?.isIdle) {
-    const idleText = allIdle ? `${TEARDROP_ASTERISK} Worked for ${formatDuration(Date.now() - foregroundedTeammate.startTime)}` : `${TEARDROP_ASTERISK} Idle`;
+    const idleText = allIdle ? `${TEARDROP_ASTERISK} 已工作 ${formatDuration(Date.now() - foregroundedTeammate.startTime)}` : `${TEARDROP_ASTERISK} 空闲`;
     return <Box flexDirection="column" width="100%" alignItems="flex-start">
         <Box flexDirection="row" flexWrap="wrap" marginTop={1} width="100%">
           <Text dimColor>{idleText}</Text>
         </Box>
-        {showSpinnerTree && hasRunningTeammates && <TeammateSpinnerTree selectedIndex={selectedIPAgentIndex} isInSelectionMode={viewSelectionMode === 'selecting-agent'} allIdle={allIdle} leaderVerb={leaderIsIdle ? undefined : leaderVerb} leaderIdleText={leaderIsIdle ? 'Idle' : undefined} leaderTokenCount={leaderTokenCount} />}
+        {showSpinnerTree && hasRunningTeammates && <TeammateSpinnerTree selectedIndex={selectedIPAgentIndex} isInSelectionMode={viewSelectionMode === 'selecting-agent'} allIdle={allIdle} leaderVerb={leaderIsIdle ? undefined : leaderVerb} leaderIdleText={leaderIsIdle ? '空闲' : undefined} leaderTokenCount={leaderTokenCount} />}
       </Box>;
   }
 
@@ -256,7 +256,7 @@ function SpinnerWithVerbInner({
   const tipsEnabled = settings.spinnerTipsEnabled !== false;
   const showClearTip = tipsEnabled && elapsedSnapshot > 1_800_000;
   const showBtwTip = tipsEnabled && elapsedSnapshot > 30_000 && !getGlobalConfig().btwUseCount;
-  const effectiveTip = contextTipsActive ? undefined : showClearTip && !nextTask ? 'Use /clear to start fresh when switching topics and free up context' : showBtwTip && !nextTask ? "Use /btw to ask a quick side question without interrupting Claude's current work" : spinnerTip;
+  const effectiveTip = contextTipsActive ? undefined : showClearTip && !nextTask ? '切换话题时可用 /clear 开始新上下文并释放空间' : showBtwTip && !nextTask ? '可用 /btw 快速问一个旁路问题，不打断 Claude 当前工作' : spinnerTip;
 
   // Budget text (ant-only) — shown above the tip line
   let budgetText: string | null = null;
@@ -265,7 +265,7 @@ function SpinnerWithVerbInner({
     if (budget !== null && budget > 0) {
       const tokens = getTurnOutputTokens();
       if (tokens >= budget) {
-        budgetText = `Target: ${formatNumber(tokens)} used (${formatNumber(budget)} min ${figures.tick})`;
+        budgetText = `目标：已使用 ${formatNumber(tokens)}（最低 ${formatNumber(budget)} ${figures.tick}）`;
       } else {
         const pct = Math.round(tokens / budget * 100);
         const remaining = budget - tokens;
@@ -273,13 +273,13 @@ function SpinnerWithVerbInner({
         const eta = rate > 0 ? ` \u00B7 ~${formatDuration(remaining / rate, {
           mostSignificantOnly: true
         })}` : '';
-        budgetText = `Target: ${formatNumber(tokens)} / ${formatNumber(budget)} (${pct}%)${eta}`;
+        budgetText = `目标：${formatNumber(tokens)} / ${formatNumber(budget)} (${pct}%)${eta}`;
       }
     }
   }
   return <Box flexDirection="column" width="100%" alignItems="flex-start">
       <SpinnerAnimationRow mode={mode} reducedMotion={reducedMotion} hasActiveTools={hasActiveTools} responseLengthRef={responseLengthRef} message={message} messageColor={messageColor} shimmerColor={shimmerColor} overrideColor={overrideColor} loadingStartTimeRef={loadingStartTimeRef} totalPausedMsRef={totalPausedMsRef} pauseStartTimeRef={pauseStartTimeRef} spinnerSuffix={spinnerSuffix} verbose={verbose} columns={columns} hasRunningTeammates={hasRunningTeammates} teammateTokens={teammateTokens} foregroundedTeammate={foregroundedTeammate} leaderIsIdle={leaderIsIdle} thinkingStatus={thinkingStatus} effortSuffix={effortSuffix} />
-      {showSpinnerTree && hasRunningTeammates ? <TeammateSpinnerTree selectedIndex={selectedIPAgentIndex} isInSelectionMode={viewSelectionMode === 'selecting-agent'} allIdle={allIdle} leaderVerb={leaderIsIdle ? undefined : leaderVerb} leaderIdleText={leaderIsIdle ? 'Idle' : undefined} leaderTokenCount={leaderTokenCount} /> : showExpandedTodos && tasksV2 && tasksV2.length > 0 ? <Box width="100%" flexDirection="column">
+      {showSpinnerTree && hasRunningTeammates ? <TeammateSpinnerTree selectedIndex={selectedIPAgentIndex} isInSelectionMode={viewSelectionMode === 'selecting-agent'} allIdle={allIdle} leaderVerb={leaderIsIdle ? undefined : leaderVerb} leaderIdleText={leaderIsIdle ? '空闲' : undefined} leaderTokenCount={leaderTokenCount} /> : showExpandedTodos && tasksV2 && tasksV2.length > 0 ? <Box width="100%" flexDirection="column">
           <MessageResponse>
             <TaskListV2 tasks={tasksV2} />
           </MessageResponse>
@@ -293,7 +293,7 @@ function SpinnerWithVerbInner({
             </MessageResponse>}
           {(nextTask || effectiveTip) && <MessageResponse>
               <Text dimColor>
-                {nextTask ? `Next: ${nextTask.subject}` : `Tip: ${effectiveTip}`}
+                {nextTask ? `下一步：${nextTask.subject}` : `提示：${effectiveTip}`}
               </Text>
             </MessageResponse>}
         </Box> : null}

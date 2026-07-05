@@ -143,7 +143,7 @@ const externalTips: Tip[] = [
   {
     id: 'git-worktrees',
     content: async () =>
-      'Use git worktrees to run multiple Claude sessions in parallel.',
+      '可以使用 git worktrees 并行运行多个 Claude 会话。',
     cooldownSessions: 10,
     isRelevant: async () => {
       try {
@@ -158,7 +158,7 @@ const externalTips: Tip[] = [
   {
     id: 'color-when-multi-clauding',
     content: async () =>
-      'Running multiple Claude sessions? Use /color and /rename to tell them apart at a glance.',
+      '同时运行多个 Claude 会话时，可以用 /color 和 /rename 快速区分。',
     cooldownSessions: 10,
     isRelevant: async () => {
       if (getCurrentSessionAgentColor()) return false
@@ -170,8 +170,8 @@ const externalTips: Tip[] = [
     id: 'terminal-setup',
     content: async () =>
       env.terminal === 'Apple_Terminal'
-        ? 'Run /terminal-setup to enable convenient terminal integration like Option + Enter for new line and more'
-        : 'Run /terminal-setup to enable convenient terminal integration like Shift + Enter for new line and more',
+        ? '运行 /terminal-setup 启用更顺手的终端集成，例如 Option + Enter 换行等'
+        : '运行 /terminal-setup 启用更顺手的终端集成，例如 Shift + Enter 换行等',
     cooldownSessions: 10,
     async isRelevant() {
       const config = getGlobalConfig()
@@ -369,21 +369,21 @@ const externalTips: Tip[] = [
   {
     id: 'double-esc-code-restore',
     content: async () =>
-      'Double-tap esc to rewind the code and/or conversation to a previous point in time',
+      '连按两次 esc 可以把代码或对话回退到之前的时间点',
     cooldownSessions: 10,
     isRelevant: async () => fileHistoryEnabled(),
   },
   {
     id: 'continue',
     content: async () =>
-      'Run claude --continue or claude --resume to resume a conversation',
+      '运行 claude --continue 或 claude --resume 可以恢复会话',
     cooldownSessions: 10,
     isRelevant: async () => true,
   },
   {
     id: 'rename-conversation',
     content: async () =>
-      'Name your conversations with /rename to find them easily in /resume later',
+      '用 /rename 给会话命名，之后在 /resume 中更容易找到',
     cooldownSessions: 15,
     isRelevant: async () =>
       isCustomTitleEnabled() && getGlobalConfig().numStartups > 10,
@@ -391,7 +391,7 @@ const externalTips: Tip[] = [
   {
     id: 'custom-commands',
     content: async () =>
-      'Create skills by adding .md files to .claude/skills/ in your project or ~/.claude/skills/ for skills that work in any project',
+      '可以在项目的 .claude/skills/ 或全局 ~/.claude/skills/ 中添加 .md 文件来创建技能',
     cooldownSessions: 15,
     async isRelevant() {
       const config = getGlobalConfig()
@@ -402,22 +402,22 @@ const externalTips: Tip[] = [
     id: 'shift-tab',
     content: async () =>
       process.env.USER_TYPE === 'ant'
-        ? `Hit ${getShortcutDisplay('chat:cycleMode', 'Chat', 'shift+tab')} to cycle between default mode and auto mode`
-        : `Hit ${getShortcutDisplay('chat:cycleMode', 'Chat', 'shift+tab')} to cycle between default mode, auto-accept edit mode, and plan mode`,
+        ? `按 ${getShortcutDisplay('chat:cycleMode', 'Chat', 'shift+tab')} 在默认模式和自动模式之间切换`
+        : `按 ${getShortcutDisplay('chat:cycleMode', 'Chat', 'shift+tab')} 在默认模式、自动接受编辑模式和计划模式之间切换`,
     cooldownSessions: 10,
     isRelevant: async () => true,
   },
   {
     id: 'image-paste',
     content: async () =>
-      `Use ${getShortcutDisplay('chat:imagePaste', 'Chat', 'ctrl+v')} to paste images from your clipboard`,
+      `使用 ${getShortcutDisplay('chat:imagePaste', 'Chat', 'ctrl+v')} 从剪贴板粘贴图片`,
     cooldownSessions: 20,
     isRelevant: async () => true,
   },
   {
     id: 'custom-agents',
     content: async () =>
-      'Use /agents to optimize specific tasks. Eg. Software Architect, Code Writer, Code Reviewer',
+      '使用 /agents 为特定任务选择更合适的代理，例如软件架构师、代码编写、代码审查',
     cooldownSessions: 15,
     async isRelevant() {
       const config = getGlobalConfig()
@@ -427,7 +427,7 @@ const externalTips: Tip[] = [
   {
     id: 'agent-flag',
     content: async () =>
-      'Use --agent <agent_name> to directly start a conversation with a subagent',
+      '使用 --agent <agent_name> 可以直接和子代理开始对话',
     cooldownSessions: 15,
     async isRelevant() {
       const config = getGlobalConfig()
@@ -437,7 +437,7 @@ const externalTips: Tip[] = [
   {
     id: 'desktop-app',
     content: async () =>
-      'Run Claude Code locally or remotely using the Claude desktop app: clau.de/desktop',
+      '可以用 Claude 桌面应用在本地或远程运行 Claude Code：clau.de/desktop',
     cooldownSessions: 15,
     isRelevant: async () => getPlatform() !== 'linux',
   },
@@ -445,7 +445,7 @@ const externalTips: Tip[] = [
     id: 'desktop-shortcut',
     content: async ctx => {
       const blue = color('suggestion', ctx.theme)
-      return `Continue your session in Claude Code Desktop with ${blue('/desktop')}`
+      return `使用 ${blue('/desktop')} 在 Claude Code Desktop 中继续当前会话`
     },
     cooldownSessions: 15,
     isRelevant: async () => {
@@ -459,21 +459,21 @@ const externalTips: Tip[] = [
   {
     id: 'web-app',
     content: async () =>
-      'Run tasks in the cloud while you keep coding locally · clau.de/web',
+      '你可以继续在本地写代码，同时把任务放到云端运行 · clau.de/web',
     cooldownSessions: 15,
     isRelevant: async () => true,
   },
   {
     id: 'mobile-app',
     content: async () =>
-      '/mobile to use Claude Code from the Claude app on your phone',
+      '输入 /mobile，可在手机上的 Claude 应用里使用 Claude Code',
     cooldownSessions: 15,
     isRelevant: async () => true,
   },
   {
     id: 'opusplan-mode-reminder',
     content: async () =>
-      `Your default model setting is Opus Plan Mode. Press ${getShortcutDisplay('chat:cycleMode', 'Chat', 'shift+tab')} twice to activate Plan Mode and plan with Claude Opus.`,
+      `你的默认模型设置是 Opus Plan Mode。按两次 ${getShortcutDisplay('chat:cycleMode', 'Chat', 'shift+tab')} 可启用计划模式，并用 Claude Opus 制定方案。`,
     cooldownSessions: 2,
     async isRelevant() {
       if (process.env.USER_TYPE === 'ant') return false

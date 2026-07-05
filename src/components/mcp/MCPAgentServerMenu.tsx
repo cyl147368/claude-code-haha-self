@@ -82,22 +82,21 @@ export function MCPAgentServerMenu({
   const capitalizedServerName = capitalize(String(agentServer.name));
   if (isAuthenticating) {
     return <Box flexDirection="column" gap={1} padding={1}>
-        <Text color="claude">Authenticating with {agentServer.name}…</Text>
+        <Text color="claude">正在认证 {agentServer.name}...</Text>
         <Box>
           <Spinner />
-          <Text> A browser window will open for authentication</Text>
+          <Text> 将打开浏览器进行认证</Text>
         </Box>
         {authorizationUrl && <Box flexDirection="column">
             <Text dimColor>
-              If your browser doesn&apos;t open automatically, copy this URL
-              manually:
+              如果浏览器没有自动打开，请手动复制这个 URL：
             </Text>
             <Link url={authorizationUrl} />
           </Box>}
         <Box marginLeft={3}>
           <Text dimColor>
-            Return here after authenticating in your browser.{' '}
-            <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="go back" />
+            在浏览器完成认证后回到这里。{' '}
+            <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="返回" />
           </Text>
         </Box>
       </Box>;
@@ -107,22 +106,22 @@ export function MCPAgentServerMenu({
   // Only show authenticate option for HTTP/SSE servers
   if (agentServer.needsAuth) {
     menuOptions.push({
-      label: agentServer.isAuthenticated ? 'Re-authenticate' : 'Authenticate',
+      label: agentServer.isAuthenticated ? '重新认证' : '认证',
       value: 'auth'
     });
   }
   menuOptions.push({
-    label: 'Back',
+    label: '返回',
     value: 'back'
   });
-  return <Dialog title={`${capitalizedServerName} MCP Server`} subtitle="agent-only" onCancel={onCancel} inputGuide={exitState => exitState.pending ? <Text>Press {exitState.keyName} again to exit</Text> : <Byline>
+  return <Dialog title={`${capitalizedServerName} MCP 服务器`} subtitle="仅 agent 使用" onCancel={onCancel} inputGuide={exitState => exitState.pending ? <Text>再次按 {exitState.keyName} 退出</Text> : <Byline>
             <KeyboardShortcutHint shortcut="↑↓" action="navigate" />
             <KeyboardShortcutHint shortcut="Enter" action="confirm" />
-            <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="go back" />
+            <ConfigurableShortcutHint action="confirm:no" context="Confirmation" fallback="Esc" description="返回" />
           </Byline>}>
       <Box flexDirection="column" gap={0}>
         <Box>
-          <Text bold>Type: </Text>
+          <Text bold>类型： </Text>
           <Text dimColor>{agentServer.transport}</Text>
         </Box>
 
@@ -132,38 +131,37 @@ export function MCPAgentServerMenu({
           </Box>}
 
         {agentServer.command && <Box>
-            <Text bold>Command: </Text>
+            <Text bold>命令： </Text>
             <Text dimColor>{agentServer.command}</Text>
           </Box>}
 
         <Box>
-          <Text bold>Used by: </Text>
+          <Text bold>使用者： </Text>
           <Text dimColor>{agentServer.sourceAgents.join(', ')}</Text>
         </Box>
 
         <Box marginTop={1}>
-          <Text bold>Status: </Text>
+          <Text bold>状态： </Text>
           <Text>
-            {color('inactive', theme)(figures.radioOff)} not connected
-            (agent-only)
+            {color('inactive', theme)(figures.radioOff)} 未连接
+            （仅 agent 使用）
           </Text>
         </Box>
 
         {agentServer.needsAuth && <Box>
-            <Text bold>Auth: </Text>
-            {agentServer.isAuthenticated ? <Text>{color('success', theme)(figures.tick)} authenticated</Text> : <Text>
-                {color('warning', theme)(figures.triangleUpOutline)} may need
-                authentication
+            <Text bold>认证： </Text>
+            {agentServer.isAuthenticated ? <Text>{color('success', theme)(figures.tick)} 已认证</Text> : <Text>
+                {color('warning', theme)(figures.triangleUpOutline)} 可能需要认证
               </Text>}
           </Box>}
       </Box>
 
       <Box>
-        <Text dimColor>This server connects only when running the agent.</Text>
+        <Text dimColor>该服务器只会在运行 agent 时连接。</Text>
       </Box>
 
       {error && <Box>
-          <Text color="error">Error: {error}</Text>
+          <Text color="error">错误：{error}</Text>
         </Box>}
 
       <Box>

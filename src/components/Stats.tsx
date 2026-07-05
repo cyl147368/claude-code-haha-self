@@ -72,7 +72,7 @@ function createAllTimeStatsPromise(): Promise<StatsResult> {
       data
     };
   }).catch((err): StatsResult => {
-    const message = err instanceof Error ? err.message : 'Failed to load stats';
+    const message = err instanceof Error ? err.message : '加载统计失败';
     return {
       type: 'error',
       message
@@ -94,7 +94,7 @@ export function Stats(t0) {
   const allTimePromise = t1;
   let t2;
   if ($[1] === Symbol.for("react.memo_cache_sentinel")) {
-    t2 = <Box marginTop={1}><Spinner /><Text> Loading your Claude Code stats…</Text></Box>;
+    t2 = <Box marginTop={1}><Spinner /><Text> 正在加载 Claude Code 统计...</Text></Box>;
     $[1] = t2;
   } else {
     t2 = $[1];
@@ -231,7 +231,7 @@ function StatsContent(t0) {
   if (allTimeResult.type === "error") {
     let t7;
     if ($[13] !== allTimeResult.message) {
-      t7 = <Box marginTop={1}><Text color="error">Failed to load stats: {allTimeResult.message}</Text></Box>;
+      t7 = <Box marginTop={1}><Text color="error">加载统计失败：{allTimeResult.message}</Text></Box>;
       $[13] = allTimeResult.message;
       $[14] = t7;
     } else {

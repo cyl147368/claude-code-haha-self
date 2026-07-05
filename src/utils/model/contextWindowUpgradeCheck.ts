@@ -40,7 +40,7 @@ export function getUpgradeMessage(context: 'warning' | 'tip'): string | null {
     case 'warning':
       return `/model ${upgrade.alias}`
     case 'tip':
-      return `Tip: You have access to ${upgrade.name} with ${upgrade.multiplier}x more context`
+      return `提示：你可以使用 ${upgrade.name}，上下文容量提升 ${upgrade.multiplier} 倍`
     default:
       return null
   }

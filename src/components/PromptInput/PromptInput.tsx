@@ -818,7 +818,7 @@ function PromptInput({
         addNotification({
           key: 'stash-hint',
           jsx: <Text dimColor>
-              Tip:{' '}
+              提示：{' '}
               <ConfigurableShortcutHint action="chat:stash" context="Chat" fallback="ctrl+s" description="stash" />
             </Text>,
           priority: 'immediate',

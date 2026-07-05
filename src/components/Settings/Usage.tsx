@@ -194,7 +194,7 @@ export function Usage(): React.ReactNode {
         };
       };
       const responseBody = axiosError.response?.data ? jsonStringify(axiosError.response.data) : undefined;
-      setError(responseBody ? `Failed to load usage data: ${responseBody}` : 'Failed to load usage data');
+      setError(responseBody ? `加载用量数据失败：${responseBody}` : '加载用量数据失败');
     } finally {
       setIsLoading(false);
     }
@@ -210,11 +210,11 @@ export function Usage(): React.ReactNode {
   });
   if (error) {
     return <Box flexDirection="column" gap={1}>
-        <Text color="error">Error: {error}</Text>
+        <Text color="error">错误：{error}</Text>
         <Text dimColor>
           <Byline>
-            <ConfigurableShortcutHint action="settings:retry" context="Settings" fallback="r" description="retry" />
-            <ConfigurableShortcutHint action="confirm:no" context="Settings" fallback="Esc" description="cancel" />
+            <ConfigurableShortcutHint action="settings:retry" context="Settings" fallback="r" description="重试" />
+            <ConfigurableShortcutHint action="confirm:no" context="Settings" fallback="Esc" description="取消" />
           </Byline>
         </Text>
       </Box>;

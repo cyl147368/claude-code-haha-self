@@ -150,7 +150,7 @@ function IDEScreen(t0) {
   }
   let t7;
   if ($[24] !== availableIDEs) {
-    t7 = availableIDEs.length !== 0 && availableIDEs.some(_temp2) && <Box marginTop={1}><Text color="warning">Note: Only one Claude Code instance can be connected to VS Code at a time.</Text></Box>;
+    t7 = availableIDEs.length !== 0 && availableIDEs.some(_temp2) && <Box marginTop={1}><Text color="warning">注意：同一时间只能有一个 Claude Code 实例连接到 VS Code。</Text></Box>;
     $[24] = availableIDEs;
     $[25] = t7;
   } else {
@@ -158,7 +158,7 @@ function IDEScreen(t0) {
   }
   let t8;
   if ($[26] !== availableIDEs.length) {
-    t8 = availableIDEs.length !== 0 && !isSupportedTerminal() && <Box marginTop={1}><Text dimColor={true}>Tip: You can enable auto-connect to IDE in /config or with the --ide flag</Text></Box>;
+    t8 = availableIDEs.length !== 0 && !isSupportedTerminal() && <Box marginTop={1}><Text dimColor={true}>提示：可在 /config 中启用 IDE 自动连接，或使用 --ide 参数。</Text></Box>;
     $[26] = availableIDEs.length;
     $[27] = t8;
   } else {

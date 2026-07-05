@@ -49,7 +49,11 @@ import {
   type OverageDisabledReason,
 } from '../claudeAiLimits.js'
 import { shouldProcessRateLimits } from '../rateLimitMocking.js' // Used for /mock-limits command
-import { extractConnectionErrorDetails, formatAPIError } from './errorUtils.js'
+import {
+  extractConnectionErrorDetails,
+  formatAPIError,
+  isHTMLAPIErrorMessage,
+} from './errorUtils.js'
 
 export const API_ERROR_MESSAGE_PREFIX = 'API Error'
 
@@ -874,11 +878,15 @@ export function getAssistantMessageFromError(
       })
     }
 
+    const formattedError = formatAPIError(error)
+    const loginHint = isHTMLAPIErrorMessage(error.message)
+      ? `${API_ERROR_MESSAGE_PREFIX}: ${formattedError}`
+      : `Please run /login · ${API_ERROR_MESSAGE_PREFIX}: ${formattedError}`
     return createAssistantAPIErrorMessage({
       error: 'authentication_failed',
       content: getIsNonInteractiveSession()
-        ? `Failed to authenticate. ${API_ERROR_MESSAGE_PREFIX}: ${error.message}`
-        : `Please run /login · ${API_ERROR_MESSAGE_PREFIX}: ${error.message}`,
+        ? `认证失败。${API_ERROR_MESSAGE_PREFIX}: ${formattedError}`
+        : loginHint,
     })
   }
 
@@ -922,8 +930,12 @@ export function getAssistantMessageFromError(
   }
 
   if (error instanceof Error) {
+    const formattedError =
+      'message' in error && typeof error.message === 'string'
+        ? formatAPIError(error as APIError)
+        : error.message
     return createAssistantAPIErrorMessage({
-      content: `${API_ERROR_MESSAGE_PREFIX}: ${error.message}`,
+      content: `${API_ERROR_MESSAGE_PREFIX}: ${formattedError}`,
       error: 'unknown',
     })
   }

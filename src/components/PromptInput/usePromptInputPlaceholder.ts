@@ -51,7 +51,7 @@ export function usePromptInputPlaceholder({
       (getGlobalConfig().queuedCommandUpHintCount || 0) <
         NUM_TIMES_QUEUE_HINT_SHOWN
     ) {
-      return 'Press up to edit queued messages'
+      return '按上方向键编辑排队消息'
     }
 
     // Show example command if user has not submitted yet and suggestions are enabled.

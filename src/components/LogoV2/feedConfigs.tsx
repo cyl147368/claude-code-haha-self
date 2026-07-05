@@ -18,10 +18,10 @@ export function createRecentActivityFeed(activities: LogOption[]): FeedConfig {
     };
   });
   return {
-    title: 'Recent activity',
+    title: '最近活动',
     lines,
-    footer: lines.length > 0 ? '/resume for more' : undefined,
-    emptyMessage: 'No recent activity'
+    footer: lines.length > 0 ? '/resume 查看更多' : undefined,
+    emptyMessage: '暂无最近活动'
   };
 }
 export function createWhatsNewFeed(releaseNotes: string[]): FeedConfig {
@@ -39,11 +39,11 @@ export function createWhatsNewFeed(releaseNotes: string[]): FeedConfig {
       text: note
     };
   });
-  const emptyMessage = "external" === 'ant' ? 'Unable to fetch latest claude-cli-internal commits' : 'Check the Claude Code changelog for updates';
+  const emptyMessage = "external" === 'ant' ? '无法获取最新 claude-cli-internal 提交' : '查看 Claude Code 更新日志了解更新';
   return {
     title: "external" === 'ant' ? "What's new [ANT-ONLY: Latest CC commits]" : "What's new",
     lines,
-    footer: lines.length > 0 ? '/release-notes for more' : undefined,
+    footer: lines.length > 0 ? '/release-notes 查看更多' : undefined,
     emptyMessage
   };
 }
@@ -60,22 +60,22 @@ export function createProjectOnboardingFeed(steps: Step[]): FeedConfig {
       text: `${checkmark}${text}`
     };
   });
-  const warningText = getCwd() === homedir() ? 'Note: You have launched claude in your home directory. For the best experience, launch it in a project directory instead.' : undefined;
+  const warningText = getCwd() === homedir() ? '注意：你在 home 目录启动了 claude。为了获得更好的体验，请在项目目录中启动。' : undefined;
   if (warningText) {
     lines.push({
       text: warningText
     });
   }
   return {
-    title: 'Tips for getting started',
+    title: '入门提示',
     lines
   };
 }
 export function createGuestPassesFeed(): FeedConfig {
   const reward = getCachedReferrerReward();
-  const subtitle = reward ? `Share Claude Code and earn ${formatCreditAmount(reward)} of extra usage` : 'Share Claude Code with friends';
+  const subtitle = reward ? `分享 Claude Code，获得 ${formatCreditAmount(reward)} 额外用量` : '把 Claude Code 分享给朋友';
   return {
-    title: '3 guest passes',
+    title: '3 张体验邀请',
     lines: [],
     customContent: {
       content: <>

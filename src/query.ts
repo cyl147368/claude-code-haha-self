@@ -208,6 +208,19 @@ function stringifyForChineseDisplay(value: unknown): string {
   }
 }
 
+function truncateForChineseDisplay(text: string, maxChars: number): string {
+  if (text.length <= maxChars) return text
+  return `${text.slice(0, maxChars)}\n…（已省略 ${text.length - maxChars} 字）`
+}
+
+function firstLineForChineseDisplay(text: string): string {
+  const firstLine = text
+    .split('\n')
+    .map(line => line.trim())
+    .find(Boolean)
+  return firstLine ? truncateForChineseDisplay(firstLine, 80) : '空内容'
+}
+
 function isDisplayRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
 }
@@ -250,6 +263,39 @@ function formatContentForChineseDisplay(content: unknown): string {
     .join('\n\n')
 }
 
+function formatContentPreviewForChineseDisplay(
+  content: unknown,
+  maxChars: number,
+): string {
+  return truncateForChineseDisplay(formatContentForChineseDisplay(content), maxChars)
+}
+
+function formatAttachmentPreviewForChineseDisplay(
+  message: AttachmentMessage,
+): string {
+  const attachment = message.attachment
+  if (!isDisplayRecord(attachment)) {
+    return stringifyForChineseDisplay(attachment)
+  }
+
+  const lines = [`附件：${stringifyForChineseDisplay(attachment.type)}`]
+  if (typeof attachment.filename === 'string') {
+    lines.push(`文件：${attachment.filename}`)
+  }
+  if (typeof attachment.displayPath === 'string') {
+    lines.push(`路径：${attachment.displayPath}`)
+  }
+  if (typeof attachment.skillCount === 'number') {
+    lines.push(`技能数量：${attachment.skillCount}`)
+  }
+  if (typeof attachment.content === 'string') {
+    lines.push(`内容：已折叠（${attachment.content.length} 字）。`)
+  } else if ('content' in attachment) {
+    lines.push('内容：已折叠（非纯文本内容）。')
+  }
+  return lines.join('\n')
+}
+
 function formatMessageForChineseDisplay(
   message: Message,
   index: number,
@@ -262,10 +308,65 @@ function formatMessageForChineseDisplay(
     ].join('\n')
   }
 
+  if (message.type === 'attachment') {
+    return [
+      `消息 ${index + 1}（附件）`,
+      formatAttachmentPreviewForChineseDisplay(message),
+    ].join('\n')
+  }
+
   return [
     `消息 ${index + 1}（${message.type}）`,
     stringifyForChineseDisplay(message),
   ].join('\n')
+}
+
+function formatPromptMessagePreviewForChineseDisplay(
+  message: Message,
+  index: number,
+): string {
+  if (message.type === 'user' || message.type === 'assistant') {
+    const role = message.type === 'user' ? '用户' : '助手'
+    const content = message.message.content
+    if (
+      typeof content === 'string' &&
+      content.trimStart().startsWith('<system-reminder>')
+    ) {
+      return [
+        `消息 ${index + 1}（系统上下文注入）`,
+        `<system-reminder> 已折叠（${content.length} 字）。`,
+      ].join('\n')
+    }
+    return [
+      `消息 ${index + 1}（${role}）`,
+      formatContentPreviewForChineseDisplay(content, 1200),
+    ].join('\n')
+  }
+  return formatMessageForChineseDisplay(message, index)
+}
+
+function formatThinkingForChineseDisplay(
+  assistantMessages: AssistantMessage[],
+): string {
+  const thinkingBlocks: string[] = []
+  for (const assistantMessage of assistantMessages) {
+    const content = assistantMessage.message.content
+    if (!Array.isArray(content)) continue
+    for (const block of content) {
+      if (!isDisplayRecord(block)) continue
+      if (block.type === 'thinking') {
+        thinkingBlocks.push(stringifyForChineseDisplay(block.thinking))
+      } else if (block.type === 'redacted_thinking') {
+        thinkingBlocks.push('redacted_thinking：内容已由模型提供方隐藏。')
+      }
+    }
+  }
+  if (thinkingBlocks.length === 0) {
+    return '未返回 thinking 内容（当前模型或网关可能未提供 thinking block）。'
+  }
+  return thinkingBlocks
+    .map((thinking, index) => `思考 ${index + 1}：\n${thinking}`)
+    .join('\n\n')
 }
 
 function isApiDisplayMessage(message: Message): boolean {
@@ -273,11 +374,26 @@ function isApiDisplayMessage(message: Message): boolean {
   const content = 'content' in message ? message.content : undefined
   return (
     typeof content === 'string' &&
-    (content.startsWith('[请求调用]') || content.startsWith('[请求返回]'))
+    (content.startsWith('[流程]') ||
+      content.startsWith('[模型提示词]') ||
+      content.startsWith('[模型返回]') ||
+      content.startsWith('[请求调用]') ||
+      content.startsWith('[请求返回]'))
   )
 }
 
-function formatApiRequestForChineseDisplay({
+function formatApiFlowForChineseDisplay({
+  querySource,
+}: {
+  querySource: QuerySource
+}): string {
+  return [
+    '[流程]',
+    `前端输入经 CLI/REPL 收集后进入 queryLoop（来源：${querySource}），后端在这里合并系统提示词、上下文和工具列表，再通过 callModel 调用模型服务。`,
+  ].join('\n')
+}
+
+function formatModelPromptForChineseDisplay({
   model,
   querySource,
   systemPrompt,
@@ -292,26 +408,36 @@ function formatApiRequestForChineseDisplay({
   thinkingConfig: ThinkingConfig
   tools: ToolUseContext['options']['tools']
 }): string {
-  const toolNames = tools.map(tool => tool.name).join(', ') || '无'
+  const toolNames = tools.map(tool => tool.name)
+  const totalSystemPromptChars = systemPrompt.reduce(
+    (total, prompt) => total + prompt.length,
+    0,
+  )
   const displayMessages = messages.filter(message => !isApiDisplayMessage(message))
+  const visibleMessages = displayMessages.slice(-6)
+  const omittedMessageCount = displayMessages.length - visibleMessages.length
   return [
-    '[请求调用]',
+    '[模型提示词]',
     `模型：${model}`,
     `来源：${querySource}`,
-    `工具：${toolNames}`,
+    `后端处理：合并系统提示词、用户上下文、历史消息和工具列表，过滤本地调试消息后调用 callModel。`,
+    `工具：${toolNames.length === 0 ? '无' : `${toolNames.length} 个：${toolNames.join(', ')}`}`,
     `思考配置：${stringifyForChineseDisplay(thinkingConfig)}`,
     '',
-    '系统提示词：',
+    `系统提示词：共 ${systemPrompt.length} 条，合计 ${totalSystemPromptChars} 字。为避免刷屏，这里只显示每条开头预览。`,
     systemPrompt
-      .map((prompt, index) => `系统提示 ${index + 1}：\n${prompt}`)
+      .map(
+        (prompt, index) =>
+          `系统提示 ${index + 1}：${firstLineForChineseDisplay(prompt)}（${prompt.length} 字）`,
+      )
       .join('\n\n'),
     '',
-    '消息内容：',
-    displayMessages.map(formatMessageForChineseDisplay).join('\n\n'),
+    `消息内容：共 ${displayMessages.length} 条${omittedMessageCount > 0 ? `，省略较早 ${omittedMessageCount} 条，仅显示最近 ${visibleMessages.length} 条` : ''}。`,
+    visibleMessages.map(formatPromptMessagePreviewForChineseDisplay).join('\n\n'),
   ].join('\n')
 }
 
-function formatApiResponseForChineseDisplay({
+function formatModelResponseForChineseDisplay({
   model,
   assistantMessages,
 }: {
@@ -319,9 +445,12 @@ function formatApiResponseForChineseDisplay({
   assistantMessages: AssistantMessage[]
 }): string {
   return [
-    '[请求返回]',
+    '[模型返回]',
     `模型：${model}`,
     `返回消息数：${assistantMessages.length}`,
+    '',
+    '模型思考过程：',
+    formatThinkingForChineseDisplay(assistantMessages),
     '',
     assistantMessages.length === 0
       ? '返回内容：无'
@@ -799,7 +928,11 @@ async function* queryLoop(
             userContext,
           ).filter(message => !isApiDisplayMessage(message))
           yield createSystemMessage(
-            formatApiRequestForChineseDisplay({
+            formatApiFlowForChineseDisplay({ querySource }),
+            'warning',
+          )
+          yield createSystemMessage(
+            formatModelPromptForChineseDisplay({
               model: currentModel,
               querySource,
               systemPrompt: fullSystemPrompt,
@@ -1016,7 +1149,7 @@ async function* queryLoop(
           }
           queryCheckpoint('query_api_streaming_end')
           yield createSystemMessage(
-            formatApiResponseForChineseDisplay({
+            formatModelResponseForChineseDisplay({
               model: currentModel,
               assistantMessages,
             }),
