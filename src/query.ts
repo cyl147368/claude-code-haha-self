@@ -208,141 +208,100 @@ function stringifyForChineseDisplay(value: unknown): string {
   }
 }
 
-function truncateForChineseDisplay(text: string, maxChars: number): string {
-  if (text.length <= maxChars) return text
-  return `${text.slice(0, maxChars)}\n…（已省略 ${text.length - maxChars} 字）`
-}
-
-function firstLineForChineseDisplay(text: string): string {
-  const firstLine = text
-    .split('\n')
-    .map(line => line.trim())
-    .find(Boolean)
-  return firstLine ? truncateForChineseDisplay(firstLine, 80) : '空内容'
-}
-
 function isDisplayRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
 }
 
-function formatContentForChineseDisplay(content: unknown): string {
-  if (typeof content === 'string') return content
-  if (!Array.isArray(content)) return stringifyForChineseDisplay(content)
+function stringifyTraceJson(value: unknown): string {
+  const seen = new WeakSet<object>()
+  try {
+    return (
+      JSON.stringify(
+        value,
+        (key, nestedValue) => {
+          if (
+            /^(api[-_]?key|authorization|password|secret|access[-_]?token|refresh[-_]?token)$/i.test(
+              key,
+            )
+          ) {
+            return '[已隐藏]'
+          }
+          if (
+            key === 'data' &&
+            typeof nestedValue === 'string' &&
+            nestedValue.length > 1000
+          ) {
+            return `[二进制内容已折叠，共 ${nestedValue.length} 字符]`
+          }
+          if (nestedValue !== null && typeof nestedValue === 'object') {
+            if (seen.has(nestedValue)) return '[循环引用]'
+            seen.add(nestedValue)
+          }
+          return nestedValue
+        },
+        2,
+      ) ?? String(value)
+    )
+  } catch {
+    return String(value)
+  }
+}
 
-  return content
-    .map((block, index) => {
-      if (!isDisplayRecord(block)) {
-        return `${index + 1}. 内容块：\n${stringifyForChineseDisplay(block)}`
-      }
+function formatJsonCodeBlock(value: unknown): string {
+  return ['```json', stringifyTraceJson(value), '```'].join('\n')
+}
 
-      switch (block.type) {
-        case 'text':
-          return `${index + 1}. 文本：\n${stringifyForChineseDisplay(block.text)}`
-        case 'tool_use':
-          return [
-            `${index + 1}. 工具调用：${stringifyForChineseDisplay(block.name)}`,
-            `调用 ID：${stringifyForChineseDisplay(block.id)}`,
-            `输入：\n${stringifyForChineseDisplay(block.input)}`,
-          ].join('\n')
-        case 'tool_result':
-          return [
-            `${index + 1}. 工具返回：${stringifyForChineseDisplay(block.tool_use_id)}`,
-            `是否错误：${stringifyForChineseDisplay(block.is_error ?? false)}`,
-            `内容：\n${stringifyForChineseDisplay(block.content)}`,
-          ].join('\n')
-        case 'thinking':
-          return `${index + 1}. 思考内容：\n${stringifyForChineseDisplay(block.thinking)}`
-        case 'image':
-          return `${index + 1}. 图片内容：\n${stringifyForChineseDisplay(block)}`
-        case 'document':
-          return `${index + 1}. 文档内容：\n${stringifyForChineseDisplay(block)}`
-        default:
-          return `${index + 1}. ${stringifyForChineseDisplay(block.type)} 内容块：\n${stringifyForChineseDisplay(block)}`
-      }
+function formatTextCodeBlock(value: unknown): string {
+  return ['```text', stringifyForChineseDisplay(value), '```'].join('\n')
+}
+
+type TracePromptLocation = {
+  round: number
+  index: number
+}
+
+type TracePromptDedupState = {
+  systemPrompts: Map<string, TracePromptLocation>
+  messages: Map<string, TracePromptLocation>
+}
+
+function deduplicateTraceItems<T>(
+  items: readonly T[],
+  seen: Map<string, TracePromptLocation>,
+  round: number,
+  fingerprint: (item: T) => string,
+  placeholder: (first: TracePromptLocation) => unknown,
+): unknown[] {
+  return items.map((item, index) => {
+    const key = fingerprint(item)
+    const first = seen.get(key)
+    if (first) return placeholder(first)
+    seen.set(key, { round, index })
+    return item
+  })
+}
+
+function fingerprintTraceMessage(message: unknown): string {
+  if (!isDisplayRecord(message)) return stringifyTraceJson(message)
+
+  const nestedMessage = message.message
+  if (isDisplayRecord(nestedMessage)) {
+    return stringifyTraceJson({
+      type: message.type,
+      role: nestedMessage.role,
+      content: nestedMessage.content,
     })
-    .join('\n\n')
-}
-
-function formatContentPreviewForChineseDisplay(
-  content: unknown,
-  maxChars: number,
-): string {
-  return truncateForChineseDisplay(formatContentForChineseDisplay(content), maxChars)
-}
-
-function formatAttachmentPreviewForChineseDisplay(
-  message: AttachmentMessage,
-): string {
-  const attachment = message.attachment
-  if (!isDisplayRecord(attachment)) {
-    return stringifyForChineseDisplay(attachment)
   }
 
-  const lines = [`附件：${stringifyForChineseDisplay(attachment.type)}`]
-  if (typeof attachment.filename === 'string') {
-    lines.push(`文件：${attachment.filename}`)
-  }
-  if (typeof attachment.displayPath === 'string') {
-    lines.push(`路径：${attachment.displayPath}`)
-  }
-  if (typeof attachment.skillCount === 'number') {
-    lines.push(`技能数量：${attachment.skillCount}`)
-  }
-  if (typeof attachment.content === 'string') {
-    lines.push(`内容：已折叠（${attachment.content.length} 字）。`)
-  } else if ('content' in attachment) {
-    lines.push('内容：已折叠（非纯文本内容）。')
-  }
-  return lines.join('\n')
-}
-
-function formatMessageForChineseDisplay(
-  message: Message,
-  index: number,
-): string {
-  if (message.type === 'user' || message.type === 'assistant') {
-    const role = message.type === 'user' ? '用户' : '助手'
-    return [
-      `消息 ${index + 1}（${role}）`,
-      formatContentForChineseDisplay(message.message.content),
-    ].join('\n')
+  if (!('role' in message) && !('content' in message)) {
+    return stringifyTraceJson(message)
   }
 
-  if (message.type === 'attachment') {
-    return [
-      `消息 ${index + 1}（附件）`,
-      formatAttachmentPreviewForChineseDisplay(message),
-    ].join('\n')
-  }
-
-  return [
-    `消息 ${index + 1}（${message.type}）`,
-    stringifyForChineseDisplay(message),
-  ].join('\n')
-}
-
-function formatPromptMessagePreviewForChineseDisplay(
-  message: Message,
-  index: number,
-): string {
-  if (message.type === 'user' || message.type === 'assistant') {
-    const role = message.type === 'user' ? '用户' : '助手'
-    const content = message.message.content
-    if (
-      typeof content === 'string' &&
-      content.trimStart().startsWith('<system-reminder>')
-    ) {
-      return [
-        `消息 ${index + 1}（系统上下文注入）`,
-        `<system-reminder> 已折叠（${content.length} 字）。`,
-      ].join('\n')
-    }
-    return [
-      `消息 ${index + 1}（${role}）`,
-      formatContentPreviewForChineseDisplay(content, 1200),
-    ].join('\n')
-  }
-  return formatMessageForChineseDisplay(message, index)
+  return stringifyTraceJson({
+    type: message.type,
+    role: message.role,
+    content: message.content,
+  })
 }
 
 function formatThinkingForChineseDisplay(
@@ -369,6 +328,37 @@ function formatThinkingForChineseDisplay(
     .join('\n\n')
 }
 
+function countAssistantCharacters(
+  assistantMessages: AssistantMessage[],
+  blockType: 'text' | 'thinking',
+): number {
+  let count = 0
+  for (const assistantMessage of assistantMessages) {
+    for (const block of assistantMessage.message.content) {
+      if (blockType === 'text' && block.type === 'text') count += block.text.length
+      if (blockType === 'thinking' && block.type === 'thinking') {
+        count += block.thinking.length
+      }
+    }
+  }
+  return count
+}
+
+function extractLatestUserRequest(messages: Message[]): string {
+  for (let index = messages.length - 1; index >= 0; index--) {
+    const message = messages[index]
+    if (message?.type !== 'user' || message.isMeta) continue
+    const content = message.message.content
+    if (typeof content === 'string') return content
+    const text = content
+      .filter(block => block.type === 'text')
+      .map(block => block.text)
+      .join('\n')
+    if (text) return text
+  }
+  return '未识别到纯文本用户请求'
+}
+
 function isApiDisplayMessage(message: Message): boolean {
   if (message.type !== 'system') return false
   const content = 'content' in message ? message.content : undefined
@@ -378,90 +368,227 @@ function isApiDisplayMessage(message: Message): boolean {
       content.startsWith('[模型提示词]') ||
       content.startsWith('[模型返回]') ||
       content.startsWith('[请求调用]') ||
-      content.startsWith('[请求返回]'))
+      content.startsWith('[请求返回]') ||
+      content.startsWith('# Claude Code 执行过程') ||
+      /^---\n## (请求模型|模型接口返回完成|模型返回内容|调用工具|工具返回)/.test(
+        content,
+      ))
   )
 }
 
-function formatApiFlowForChineseDisplay({
+function formatExecutionStartForChineseDisplay({
+  startedAt,
+  sessionId,
+  model,
+  messages,
   querySource,
 }: {
+  startedAt: Date
+  sessionId: string
+  model: string
+  messages: Message[]
   querySource: QuerySource
 }): string {
   return [
-    '[流程]',
-    `前端输入经 CLI/REPL 收集后进入 queryLoop（来源：${querySource}），后端在这里合并系统提示词、上下文和工具列表，再通过 callModel 调用模型服务。`,
+    '# Claude Code 执行过程',
+    '',
+    `- 开始时间：${startedAt.toISOString()}`,
+    `- 会话编号：${sessionId}`,
+    `- 运行来源：${querySource}`,
+    `- 用户请求：${extractLatestUserRequest(messages)}`,
+    '',
+    '---',
+    '## 运行配置',
+    '',
+    '- 前后端流程：前端输入经 CLI/REPL 进入 `queryLoop()`，后端合并提示词、上下文和工具后通过 `callModel()` 请求模型。',
+    '- 入口方法：`query() -> queryLoop()`',
+    '- 源码文件：`src/query.ts`',
+    `- 模型：${model}`,
+    `- 工作目录：${process.cwd()}`,
   ].join('\n')
 }
 
-function formatModelPromptForChineseDisplay({
+function formatModelRequestForChineseDisplay({
+  round,
   model,
   querySource,
   systemPrompt,
   messages,
   thinkingConfig,
   tools,
+  dedupState,
 }: {
+  round: number
   model: string
   querySource: QuerySource
   systemPrompt: SystemPrompt
   messages: Message[]
   thinkingConfig: ThinkingConfig
   tools: ToolUseContext['options']['tools']
+  dedupState: TracePromptDedupState
 }): string {
-  const toolNames = tools.map(tool => tool.name)
-  const totalSystemPromptChars = systemPrompt.reduce(
-    (total, prompt) => total + prompt.length,
-    0,
-  )
   const displayMessages = messages.filter(message => !isApiDisplayMessage(message))
-  const visibleMessages = displayMessages.slice(-6)
-  const omittedMessageCount = displayMessages.length - visibleMessages.length
+  const normalizedMessages = normalizeMessagesForAPI(displayMessages, tools)
+  const displayedSystemPrompt = deduplicateTraceItems(
+    systemPrompt,
+    dedupState.systemPrompts,
+    round,
+    prompt => prompt,
+    first =>
+      `[重复提示词已省略：与第 ${first.round} 轮 systemPrompt[${first.index}] 相同]`,
+  )
+  const displayedMessages = deduplicateTraceItems(
+    normalizedMessages,
+    dedupState.messages,
+    round,
+    fingerprintTraceMessage,
+    first => ({
+      type: 'trace_placeholder',
+      content: `重复消息已省略：与第 ${first.round} 轮 messages[${first.index}] 相同`,
+    }),
+  )
   return [
-    '[模型提示词]',
-    `模型：${model}`,
-    `来源：${querySource}`,
-    `后端处理：合并系统提示词、用户上下文、历史消息和工具列表，过滤本地调试消息后调用 callModel。`,
-    `工具：${toolNames.length === 0 ? '无' : `${toolNames.length} 个：${toolNames.join(', ')}`}`,
-    `思考配置：${stringifyForChineseDisplay(thinkingConfig)}`,
+    '---',
+    `## 请求模型（第 ${round} 轮）`,
     '',
-    `系统提示词：共 ${systemPrompt.length} 条，合计 ${totalSystemPromptChars} 字。为避免刷屏，这里只显示每条开头预览。`,
-    systemPrompt
-      .map(
-        (prompt, index) =>
-          `系统提示 ${index + 1}：${firstLineForChineseDisplay(prompt)}（${prompt.length} 字）`,
-      )
-      .join('\n\n'),
+    '- 调用方法：`queryLoop() -> callModel()`',
+    '- 源码文件：`src/query.ts`',
+    '- 执行方式：串行请求、流式读取模型消息',
+    `- 运行来源：${querySource}`,
+    `- 模型：${model}`,
     '',
-    `消息内容：共 ${displayMessages.length} 条${omittedMessageCount > 0 ? `，省略较早 ${omittedMessageCount} 条，仅显示最近 ${visibleMessages.length} 条` : ''}。`,
-    visibleMessages.map(formatPromptMessagePreviewForChineseDisplay).join('\n\n'),
+    '### 请求内容（日志去重展示）',
+    '',
+    '重复的系统提示词和历史消息仅首次完整展示；占位符只影响日志，进入 `callModel()` 的仍是完整请求。',
+    '',
+    formatJsonCodeBlock({
+      model,
+      systemPrompt: displayedSystemPrompt,
+      messages: displayedMessages,
+      thinkingConfig,
+      tools: tools.map(tool => ({
+        name: tool.name,
+        deferred: tool.shouldDefer ?? false,
+      })),
+      stream: true,
+    }),
   ].join('\n')
 }
 
 function formatModelResponseForChineseDisplay({
+  round,
   model,
   assistantMessages,
+  elapsedMs,
 }: {
+  round: number
   model: string
   assistantMessages: AssistantMessage[]
+  elapsedMs: number
+}): string {
+  const answerChars = countAssistantCharacters(assistantMessages, 'text')
+  const thinkingChars = countAssistantCharacters(assistantMessages, 'thinking')
+  const lastResponse = assistantMessages.at(-1)?.message
+  return [
+    '---',
+    `## 模型接口返回完成（第 ${round} 轮）`,
+    '',
+    `- 模型：${model}`,
+    '- 执行方式：串行流式读取',
+    `- 耗时：${elapsedMs} ms`,
+    `- 返回消息数：${assistantMessages.length}`,
+    `- 回答字符数：${answerChars}`,
+    `- 推理字符数：${thinkingChars}`,
+    `- 停止原因：${lastResponse?.stop_reason ?? '未提供'}`,
+    '',
+    '---',
+    `## 模型返回内容（第 ${round} 次）`,
+    '',
+    '- 处理方法：`queryLoop()`',
+    '- 源码文件：`src/query.ts`',
+    '- 用途：文本内容会展示给用户，工具调用内容会进入工具执行阶段。',
+    '',
+    '### 模型思考',
+    '',
+    formatTextCodeBlock(formatThinkingForChineseDisplay(assistantMessages)),
+    '',
+    '### 原始返回消息',
+    '',
+    formatJsonCodeBlock(assistantMessages.map(message => message.message)),
+  ].join('\n')
+}
+
+function formatToolCallForChineseDisplay({
+  round,
+  toolUse,
+  streaming,
+}: {
+  round: number
+  toolUse: ToolUseBlock
+  streaming: boolean
 }): string {
   return [
-    '[模型返回]',
-    `模型：${model}`,
-    `返回消息数：${assistantMessages.length}`,
+    '---',
+    `## 调用工具（第 ${round} 轮）`,
     '',
-    '模型思考过程：',
-    formatThinkingForChineseDisplay(assistantMessages),
+    `- 工具：${toolUse.name}`,
+    `- 调用编号：${toolUse.id}`,
+    `- 执行方式：${streaming ? '流式执行（模型输出期间即可开始）' : '模型返回后执行'}`,
+    '- 处理方法：`StreamingToolExecutor` / `runTools()`',
+    '- 源码文件：`src/query.ts`',
     '',
-    assistantMessages.length === 0
-      ? '返回内容：无'
-      : assistantMessages
-          .map((message, index) =>
-            [
-              `返回 ${index + 1}：`,
-              formatContentForChineseDisplay(message.message.content),
-            ].join('\n'),
-          )
-          .join('\n\n'),
+    '### 工具输入',
+    '',
+    formatJsonCodeBlock(toolUse.input),
+  ].join('\n')
+}
+
+function findToolResultBlocks(
+  toolResults: (UserMessage | AttachmentMessage)[],
+  toolUseId: string,
+): Record<string, unknown>[] {
+  const matches: Record<string, unknown>[] = []
+  for (const resultMessage of toolResults) {
+    if (resultMessage.type !== 'user') continue
+    const content = resultMessage.message.content
+    if (!Array.isArray(content)) continue
+    for (const block of content) {
+      if (
+        isDisplayRecord(block) &&
+        block.type === 'tool_result' &&
+        block.tool_use_id === toolUseId
+      ) {
+        matches.push(block)
+      }
+    }
+  }
+  return matches
+}
+
+function formatToolResultForChineseDisplay({
+  round,
+  toolUse,
+  toolResults,
+}: {
+  round: number
+  toolUse: ToolUseBlock
+  toolResults: (UserMessage | AttachmentMessage)[]
+}): string {
+  const resultBlocks = findToolResultBlocks(toolResults, toolUse.id)
+  return [
+    '---',
+    `## 工具返回（第 ${round} 轮）`,
+    '',
+    `- 工具：${toolUse.name}`,
+    `- 调用编号：${toolUse.id}`,
+    '- 处理方法：`StreamingToolExecutor` / `runTools()`',
+    '- 源码文件：`src/query.ts`',
+    '',
+    '### 返回内容',
+    '',
+    resultBlocks.length > 0
+      ? formatJsonCodeBlock(resultBlocks)
+      : formatTextCodeBlock('未获得可展示的工具返回内容。'),
   ].join('\n')
 }
 
@@ -560,6 +687,13 @@ async function* queryLoop(
   // Snapshot immutable env/statsig/session state once at entry. See QueryConfig
   // for what's included and why feature() gates are intentionally excluded.
   const config = buildQueryConfig()
+  const traceStartedAt = new Date()
+  let traceHeaderEmitted = false
+  let traceRequestRound = 0
+  const tracePromptDedupState: TracePromptDedupState = {
+    systemPrompts: new Map(),
+    messages: new Map(),
+  }
 
   // Fired once per user turn — the prompt is invariant across loop iterations,
   // so per-iteration firing would ask sideQuery the same question N times.
@@ -927,18 +1061,31 @@ async function* queryLoop(
             messagesForQuery,
             userContext,
           ).filter(message => !isApiDisplayMessage(message))
+          if (!traceHeaderEmitted) {
+            yield createSystemMessage(
+              formatExecutionStartForChineseDisplay({
+                startedAt: traceStartedAt,
+                sessionId: config.sessionId,
+                model: currentModel,
+                messages: params.messages,
+                querySource,
+              }),
+              'warning',
+            )
+            traceHeaderEmitted = true
+          }
+          const currentTraceRound = ++traceRequestRound
+          const requestStartedAt = Date.now()
           yield createSystemMessage(
-            formatApiFlowForChineseDisplay({ querySource }),
-            'warning',
-          )
-          yield createSystemMessage(
-            formatModelPromptForChineseDisplay({
+            formatModelRequestForChineseDisplay({
+              round: currentTraceRound,
               model: currentModel,
               querySource,
               systemPrompt: fullSystemPrompt,
               messages: requestMessages,
               thinkingConfig: toolUseContext.options.thinkingConfig,
               tools: toolUseContext.options.tools,
+              dedupState: tracePromptDedupState,
             }),
             'warning',
           )
@@ -1150,8 +1297,10 @@ async function* queryLoop(
           queryCheckpoint('query_api_streaming_end')
           yield createSystemMessage(
             formatModelResponseForChineseDisplay({
+              round: currentTraceRound,
               model: currentModel,
               assistantMessages,
+              elapsedMs: Date.now() - requestStartedAt,
             }),
             'warning',
           )
@@ -1655,6 +1804,16 @@ async function* queryLoop(
 
     queryCheckpoint('query_tool_execution_start')
 
+    for (const toolUse of toolUseBlocks) {
+      yield createSystemMessage(
+        formatToolCallForChineseDisplay({
+          round: traceRequestRound,
+          toolUse,
+          streaming: streamingToolExecutor !== null,
+        }),
+        'warning',
+      )
+    }
 
     if (streamingToolExecutor) {
       logEvent('tengu_streaming_tool_execution_used', {
@@ -1700,6 +1859,17 @@ async function* queryLoop(
       }
     }
     queryCheckpoint('query_tool_execution_end')
+
+    for (const toolUse of toolUseBlocks) {
+      yield createSystemMessage(
+        formatToolResultForChineseDisplay({
+          round: traceRequestRound,
+          toolUse,
+          toolResults,
+        }),
+        'warning',
+      )
+    }
 
     // Generate tool use summary after tool batch completes — passed to next recursive call
     let nextPendingToolUseSummary:
