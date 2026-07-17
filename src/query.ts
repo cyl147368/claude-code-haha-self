@@ -110,6 +110,7 @@ import {
 } from './bootstrap/state.js'
 import { createBudgetTracker, checkTokenBudget } from './query/tokenBudget.js'
 import { count } from './utils/array.js'
+import { createTraceLog } from './utils/traceLog.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const snipModule = feature('HISTORY_SNIP')
@@ -376,6 +377,31 @@ function isApiDisplayMessage(message: Message): boolean {
   )
 }
 
+function getTraceApiConfig(model: string): {
+  baseUrl: string
+  requestUrl: string
+  model: string
+  keySource: string
+  key: string
+} {
+  const baseUrl =
+    process.env.ANTHROPIC_BASE_URL?.replace(/\/+$/, '') ||
+    'https://api.anthropic.com'
+  const authToken = process.env.ANTHROPIC_AUTH_TOKEN
+  const apiKey = process.env.ANTHROPIC_API_KEY
+  return {
+    baseUrl,
+    requestUrl: `${baseUrl}/v1/messages?beta=true`,
+    model,
+    keySource: authToken
+      ? 'ANTHROPIC_AUTH_TOKEN'
+      : apiKey
+        ? 'ANTHROPIC_API_KEY'
+        : '未识别',
+    key: authToken || apiKey || '未配置',
+  }
+}
+
 function formatExecutionStartForChineseDisplay({
   startedAt,
   sessionId,
@@ -389,6 +415,7 @@ function formatExecutionStartForChineseDisplay({
   messages: Message[]
   querySource: QuerySource
 }): string {
+  const apiConfig = getTraceApiConfig(model)
   return [
     '# Claude Code 执行过程',
     '',
@@ -403,7 +430,11 @@ function formatExecutionStartForChineseDisplay({
     '- 前后端流程：前端输入经 CLI/REPL 进入 `queryLoop()`，后端合并提示词、上下文和工具后通过 `callModel()` 请求模型。',
     '- 入口方法：`query() -> queryLoop()`',
     '- 源码文件：`src/query.ts`',
-    `- 模型：${model}`,
+    `- API 基础地址：${apiConfig.baseUrl}`,
+    `- 实际请求 URL：${apiConfig.requestUrl}`,
+    `- 模型：${apiConfig.model}`,
+    `- Key 来源：${apiConfig.keySource}`,
+    `- Key：${apiConfig.key}`,
     `- 工作目录：${process.cwd()}`,
   ].join('\n')
 }
@@ -427,6 +458,7 @@ function formatModelRequestForChineseDisplay({
   tools: ToolUseContext['options']['tools']
   dedupState: TracePromptDedupState
 }): string {
+  const apiConfig = getTraceApiConfig(model)
   const displayMessages = messages.filter(message => !isApiDisplayMessage(message))
   const normalizedMessages = normalizeMessagesForAPI(displayMessages, tools)
   const displayedSystemPrompt = deduplicateTraceItems(
@@ -451,11 +483,16 @@ function formatModelRequestForChineseDisplay({
     '---',
     `## 请求模型（第 ${round} 轮）`,
     '',
+    `- 请求时间：${new Date().toISOString()}`,
     '- 调用方法：`queryLoop() -> callModel()`',
     '- 源码文件：`src/query.ts`',
     '- 执行方式：串行请求、流式读取模型消息',
     `- 运行来源：${querySource}`,
-    `- 模型：${model}`,
+    `- API 基础地址：${apiConfig.baseUrl}`,
+    `- 实际请求 URL：${apiConfig.requestUrl}`,
+    `- 模型：${apiConfig.model}`,
+    `- Key 来源：${apiConfig.keySource}`,
+    `- Key：${apiConfig.key}`,
     '',
     '### 请求内容（日志去重展示）',
     '',
@@ -493,6 +530,7 @@ function formatModelResponseForChineseDisplay({
     '---',
     `## 模型接口返回完成（第 ${round} 轮）`,
     '',
+    `- 返回时间：${new Date().toISOString()}`,
     `- 模型：${model}`,
     '- 执行方式：串行流式读取',
     `- 耗时：${elapsedMs} ms`,
@@ -531,6 +569,7 @@ function formatToolCallForChineseDisplay({
     '---',
     `## 调用工具（第 ${round} 轮）`,
     '',
+    `- 调用时间：${new Date().toISOString()}`,
     `- 工具：${toolUse.name}`,
     `- 调用编号：${toolUse.id}`,
     `- 执行方式：${streaming ? '流式执行（模型输出期间即可开始）' : '模型返回后执行'}`,
@@ -579,6 +618,7 @@ function formatToolResultForChineseDisplay({
     '---',
     `## 工具返回（第 ${round} 轮）`,
     '',
+    `- 返回时间：${new Date().toISOString()}`,
     `- 工具：${toolUse.name}`,
     `- 调用编号：${toolUse.id}`,
     '- 处理方法：`StreamingToolExecutor` / `runTools()`',
@@ -688,6 +728,13 @@ async function* queryLoop(
   // for what's included and why feature() gates are intentionally excluded.
   const config = buildQueryConfig()
   const traceStartedAt = new Date()
+  const traceLog = createTraceLog({
+    sessionId: config.sessionId,
+    requestTime: traceStartedAt,
+    querySource,
+    userRequest: extractLatestUserRequest(params.messages),
+    agentId: params.toolUseContext.agentId,
+  })
   let traceHeaderEmitted = false
   let traceRequestRound = 0
   const tracePromptDedupState: TracePromptDedupState = {
@@ -1062,33 +1109,29 @@ async function* queryLoop(
             userContext,
           ).filter(message => !isApiDisplayMessage(message))
           if (!traceHeaderEmitted) {
-            yield createSystemMessage(
-              formatExecutionStartForChineseDisplay({
-                startedAt: traceStartedAt,
-                sessionId: config.sessionId,
-                model: currentModel,
-                messages: params.messages,
-                querySource,
-              }),
-              'warning',
-            )
+            const executionStart = formatExecutionStartForChineseDisplay({
+              startedAt: traceStartedAt,
+              sessionId: config.sessionId,
+              model: currentModel,
+              messages: params.messages,
+              querySource,
+            })
+            traceLog?.append(executionStart)
             traceHeaderEmitted = true
           }
           const currentTraceRound = ++traceRequestRound
           const requestStartedAt = Date.now()
-          yield createSystemMessage(
-            formatModelRequestForChineseDisplay({
-              round: currentTraceRound,
-              model: currentModel,
-              querySource,
-              systemPrompt: fullSystemPrompt,
-              messages: requestMessages,
-              thinkingConfig: toolUseContext.options.thinkingConfig,
-              tools: toolUseContext.options.tools,
-              dedupState: tracePromptDedupState,
-            }),
-            'warning',
-          )
+          const modelRequest = formatModelRequestForChineseDisplay({
+            round: currentTraceRound,
+            model: currentModel,
+            querySource,
+            systemPrompt: fullSystemPrompt,
+            messages: requestMessages,
+            thinkingConfig: toolUseContext.options.thinkingConfig,
+            tools: toolUseContext.options.tools,
+            dedupState: tracePromptDedupState,
+          })
+          traceLog?.append(modelRequest)
           for await (const message of deps.callModel({
             messages: requestMessages,
             systemPrompt: fullSystemPrompt,
@@ -1295,15 +1338,13 @@ async function* queryLoop(
             }
           }
           queryCheckpoint('query_api_streaming_end')
-          yield createSystemMessage(
-            formatModelResponseForChineseDisplay({
-              round: currentTraceRound,
-              model: currentModel,
-              assistantMessages,
-              elapsedMs: Date.now() - requestStartedAt,
-            }),
-            'warning',
-          )
+          const modelResponse = formatModelResponseForChineseDisplay({
+            round: currentTraceRound,
+            model: currentModel,
+            assistantMessages,
+            elapsedMs: Date.now() - requestStartedAt,
+          })
+          traceLog?.append(modelResponse)
 
           // Yield deferred microcompact boundary message using actual API-reported
           // token deletion count instead of client-side estimates.
@@ -1805,14 +1846,12 @@ async function* queryLoop(
     queryCheckpoint('query_tool_execution_start')
 
     for (const toolUse of toolUseBlocks) {
-      yield createSystemMessage(
-        formatToolCallForChineseDisplay({
-          round: traceRequestRound,
-          toolUse,
-          streaming: streamingToolExecutor !== null,
-        }),
-        'warning',
-      )
+      const toolCall = formatToolCallForChineseDisplay({
+        round: traceRequestRound,
+        toolUse,
+        streaming: streamingToolExecutor !== null,
+      })
+      traceLog?.append(toolCall)
     }
 
     if (streamingToolExecutor) {
@@ -1861,14 +1900,12 @@ async function* queryLoop(
     queryCheckpoint('query_tool_execution_end')
 
     for (const toolUse of toolUseBlocks) {
-      yield createSystemMessage(
-        formatToolResultForChineseDisplay({
-          round: traceRequestRound,
-          toolUse,
-          toolResults,
-        }),
-        'warning',
-      )
+      const toolResult = formatToolResultForChineseDisplay({
+        round: traceRequestRound,
+        toolUse,
+        toolResults,
+      })
+      traceLog?.append(toolResult)
     }
 
     // Generate tool use summary after tool batch completes — passed to next recursive call
